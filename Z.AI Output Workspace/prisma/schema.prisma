@@ -1,0 +1,99 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Asset entity for tracking all types of assets
+model Asset {
+  id          String   @id @default(cuid())
+  name        String   // Account name or description
+  type        String   // BANK_CURRENT, BANK_SAVINGS, ISA, LISA, STOCK, PROPERTY, OTHER
+  category    String   // CASH, INVESTMENT, PROPERTY
+  balance     Float    // Current balance/value
+  currency    String   @default("GBP")
+  
+  // For ISAs/LISAs - government bonus tracking
+  isTaxAdvantaged Boolean @default(false)
+  governmentBonus Float?  // For LISA: 25% government bonus
+  
+  // For Stocks
+  ticker      String?  // Stock ticker symbol
+  shares      Float?   // Number of shares owned
+  purchasePrice Float? // Average purchase price per share
+  
+  // For all assets - growth projections
+  annualReturnRate Float? @default(0) // Expected annual return rate (%)
+  
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relationship to historical values for trend analysis
+  history     AssetHistory[]
+}
+
+// Historical tracking for assets (for trend analysis)
+model AssetHistory {
+  id        String   @id @default(cuid())
+  assetId   String
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  balance   Float    // Balance at this point in time
+  recordedAt DateTime @default(now())
+}
+
+// Debt entity for tracking all types of liabilities
+model Debt {
+  id              String   @id @default(cuid())
+  name            String   // Debt name/description
+  type            String   // STUDENT_LOAN, CREDIT_CARD, PERSONAL_LOAN, MORTGAGE, OTHER
+  balance         Float    // Current outstanding balance
+  originalAmount  Float?   // Original loan amount
+  
+  // Interest and payment details
+  interestRate    Float    // Annual interest rate (%)
+  minimumPayment  Float?   // Minimum monthly payment
+  
+  // For Student Loans
+  studentLoanPlan String?  // PLAN_1, PLAN_2, PLAN_4, PLAN_5, POSTGRAD
+  
+  // For Mortgages
+  propertyValue   Float?   // Current property value (for equity calculation)
+  
+  // Payment tracking
+  monthlyPayment  Float?   // Actual monthly payment amount
+  startDate       DateTime? // When the debt was taken on
+  targetEndDate   DateTime? // Target payoff date
+  
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relationship to historical values
+  history         DebtHistory[]
+}
+
+// Historical tracking for debts
+model DebtHistory {
+  id        String   @id @default(cuid())
+  debtId    String
+  debt      Debt     @relation(fields: [debtId], references: [id], onDelete: Cascade)
+  balance   Float    // Balance at this point in time
+  recordedAt DateTime @default(now())
+}
+
+// Settings for the application
+model Settings {
+  id                    String   @id @default(cuid())
+  key                   String   @unique
+  value                 String
+  description           String?
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
