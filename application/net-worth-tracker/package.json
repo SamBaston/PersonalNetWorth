@@ -1,0 +1,26 @@
+{
+  "name": "net-worth-tracker",
+  "version": "1.0.0",
+  "description": "Personal Net Worth Tracker - COMP1101 Programming Assignment",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "jest --coverage",
+    "pretest": "echo 'Running tests...'"
+  },
+  "keywords": ["finance", "net-worth", "tracker"],
+  "author": "Student",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "coverageDirectory": "coverage",
+    "collectCoverageFrom": ["app.js"]
+  }
+}

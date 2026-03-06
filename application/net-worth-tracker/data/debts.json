@@ -1,0 +1,41 @@
+[
+  {
+    "id": "1704067200004-mno345",
+    "name": "Student Loan (Plan 2)",
+    "type": "student_loan",
+    "balance": 35000,
+    "interestRate": 6.25,
+    "minimumPayment": 150,
+    "planType": "plan2",
+    "creditLimit": null,
+    "termMonths": null,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "1704067200005-pqr678",
+    "name": "Credit Card",
+    "type": "credit_card",
+    "balance": 2500,
+    "interestRate": 22.9,
+    "minimumPayment": 50,
+    "planType": null,
+    "creditLimit": 5000,
+    "termMonths": null,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  },
+  {
+    "id": "1704067200006-stu901",
+    "name": "Car Loan",
+    "type": "personal_loan",
+    "balance": 8500,
+    "interestRate": 7.5,
+    "minimumPayment": 265,
+    "planType": null,
+    "creditLimit": null,
+    "termMonths": 36,
+    "createdAt": "2024-01-01T00:00:00.000Z",
+    "updatedAt": "2024-01-01T00:00:00.000Z"
+  }
+]

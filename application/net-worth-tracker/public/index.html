@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net Worth Tracker</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <span class="logo-icon">£</span>
+                <div class="logo-text">
+                    <h1>Net Worth Tracker</h1>
+                    <p>Personal Finance Dashboard</p>
+                </div>
+            </div>
+            <nav class="nav">
+                <button class="nav-btn active" data-tab="dashboard">Dashboard</button>
+                <button class="nav-btn" data-tab="assets">Assets</button>
+                <button class="nav-btn" data-tab="debts">Debts</button>
+                <button class="nav-btn" data-tab="projections">Projections</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <!-- Loading State -->
+        <div id="loading" class="loading">
+            <div class="spinner"></div>
+            <p>Loading your financial data...</p>
+        </div>
+
+        <!-- Error State -->
+        <div id="error" class="error hidden">
+            <div class="error-icon">⚠️</div>
+            <h2>Connection Error</h2>
+            <p id="error-message">Unable to connect to server</p>
+            <button class="btn btn-primary" onclick="fetchData()">Retry</button>
+        </div>
+
+        <!-- Dashboard Tab -->
+        <div id="tab-dashboard" class="tab-content hidden">
+            <!-- Net Worth Hero -->
+            <div class="hero">
+                <p class="hero-label">Total Net Worth</p>
+                <p id="net-worth" class="hero-value">£0</p>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <p class="hero-stat-label">Total Assets</p>
+                        <p id="total-assets" class="hero-stat-value">£0</p>
+                    </div>
+                    <div class="hero-stat">
+                        <p class="hero-stat-label">Total Debts</p>
+                        <p id="total-debts" class="hero-stat-value">£0</p>
+                    </div>
+                    <div class="hero-stat">
+                        <p class="hero-stat-label">LISA Bonus</p>
+                        <p id="lisa-bonus" class="hero-stat-value">£0</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <p class="stat-label">Debt-to-Equity Ratio</p>
+                    <p id="debt-equity-ratio" class="stat-value">0%</p>
+                    <p class="stat-hint">Lower is better</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Liquidity Ratio</p>
+                    <p id="liquidity-ratio" class="stat-value">0</p>
+                    <p class="stat-hint">Cash vs Debts</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Monthly Payments</p>
+                    <p id="monthly-payments" class="stat-value">£0</p>
+                    <p class="stat-hint">Minimum payments</p>
+                </div>
+                <div class="stat-card">
+                    <p class="stat-label">Debt-Free Date</p>
+                    <p id="debt-free-date" class="stat-value">N/A</p>
+                    <p id="debt-free-years" class="stat-hint">-</p>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <!-- Asset Allocation -->
+                <div class="card">
+                    <h3 class="card-title">Asset Allocation</h3>
+                    <div id="allocation-chart" class="chart-container"></div>
+                    <div id="allocation-legend" class="chart-legend"></div>
+                </div>
+
+                <!-- Net Worth Trend -->
+                <div class="card">
+                    <h3 class="card-title">Net Worth Projection</h3>
+                    <div id="trend-chart" class="chart-container"></div>
+                </div>
+            </div>
+
+            <!-- Debt Overview -->
+            <div class="card">
+                <h3 class="card-title">Debt Overview</h3>
+                <div id="debt-list" class="list-container"></div>
+            </div>
+        </div>
+
+        <!-- Assets Tab -->
+        <div id="tab-assets" class="tab-content hidden">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Assets</h2>
+                    <p id="asset-count" class="section-subtitle">0 assets tracked</p>
+                </div>
+                <button class="btn btn-success" onclick="openAssetModal()">+ Add Asset</button>
+            </div>
+            <div id="assets-list" class="list-grid"></div>
+        </div>
+
+        <!-- Debts Tab -->
+        <div id="tab-debts" class="tab-content hidden">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Debts</h2>
+                    <p id="debt-count" class="section-subtitle">0 debts tracked</p>
+                </div>
+                <button class="btn btn-danger" onclick="openDebtModal()">+ Add Debt</button>
+            </div>
+            <div id="debts-list" class="list-grid"></div>
+        </div>
+
+        <!-- Projections Tab -->
+        <div id="tab-projections" class="tab-content hidden">
+            <div class="section-header">
+                <div>
+                    <h2 class="section-title">Projections</h2>
+                    <p class="section-subtitle">Forecast your financial future</p>
+                </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="card controls-card">
+                <div class="control-group">
+                    <label class="control-label">Growth Rate</label>
+                    <div class="btn-group">
+                        <button class="rate-btn active" data-rate="4">4%</button>
+                        <button class="rate-btn" data-rate="7">7%</button>
+                        <button class="rate-btn" data-rate="10">10%</button>
+                    </div>
+                </div>
+                <div class="control-group">
+                    <label class="control-label">Time Horizon</label>
+                    <select id="projection-years" class="select">
+                        <option value="5">5 years</option>
+                        <option value="10" selected>10 years</option>
+                        <option value="15">15 years</option>
+                        <option value="20">20 years</option>
+                        <option value="30">30 years</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Projection Chart -->
+            <div class="card">
+                <h3 id="projection-title" class="card-title">Net Worth Projection (7% annual growth)</h3>
+                <div id="projection-chart" class="chart-container large"></div>
+            </div>
+
+            <!-- Scenario Cards -->
+            <div id="scenario-cards" class="scenario-grid"></div>
+
+            <!-- Projection Table -->
+            <div class="card">
+                <h3 class="card-title">Detailed Projections</h3>
+                <div class="table-container">
+                    <table id="projection-table" class="table">
+                        <thead>
+                            <tr>
+                                <th>Year</th>
+                                <th>Assets</th>
+                                <th>Debts</th>
+                                <th>Net Worth</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projection-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Asset Modal -->
+    <div id="asset-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="asset-modal-title">Add Asset</h3>
+                <button class="modal-close" onclick="closeAssetModal()">&times;</button>
+            </div>
+            <form id="asset-form" class="form">
+                <input type="hidden" id="asset-id">
+                <div class="form-group">
+                    <label class="form-label">Name *</label>
+                    <input type="text" id="asset-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type *</label>
+                    <select id="asset-type" class="form-input" required onchange="updateAssetFields()">
+                        <option value="bank_account">Bank Account</option>
+                        <option value="isa">ISA</option>
+                        <option value="lisa">LISA (Lifetime ISA)</option>
+                        <option value="stock_portfolio">Stock Portfolio</option>
+                    </select>
+                </div>
+                <div id="asset-subtype-group" class="form-group">
+                    <label class="form-label">Account Type</label>
+                    <select id="asset-subtype" class="form-input">
+                        <option value="current">Current</option>
+                        <option value="savings">Savings</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Balance *</label>
+                    <input type="number" id="asset-balance" class="form-input" step="0.01" required>
+                </div>
+                <div id="asset-interest-group" class="form-group">
+                    <label class="form-label">Interest Rate (%)</label>
+                    <input type="number" id="asset-interest" class="form-input" step="0.01">
+                </div>
+                <div id="stock-fields" class="hidden">
+                    <div class="form-group">
+                        <label class="form-label">Ticker Symbol</label>
+                        <input type="text" id="asset-ticker" class="form-input">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Quantity</label>
+                        <input type="number" id="asset-quantity" class="form-input" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Purchase Price</label>
+                        <input type="number" id="asset-purchase-price" class="form-input" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Current Price</label>
+                        <input type="number" id="asset-current-price" class="form-input" step="0.01">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeAssetModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Debt Modal -->
+    <div id="debt-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="debt-modal-title">Add Debt</h3>
+                <button class="modal-close" onclick="closeDebtModal()">&times;</button>
+            </div>
+            <form id="debt-form" class="form">
+                <input type="hidden" id="debt-id">
+                <div class="form-group">
+                    <label class="form-label">Name *</label>
+                    <input type="text" id="debt-name" class="form-input" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Type *</label>
+                    <select id="debt-type" class="form-input" required onchange="updateDebtFields()">
+                        <option value="student_loan">Student Loan</option>
+                        <option value="credit_card">Credit Card</option>
+                        <option value="personal_loan">Personal Loan</option>
+                        <option value="mortgage">Mortgage</option>
+                    </select>
+                </div>
+                <div id="plan-type-group" class="form-group">
+                    <label class="form-label">Plan Type</label>
+                    <select id="debt-plan-type" class="form-input">
+                        <option value="plan1">Plan 1</option>
+                        <option value="plan2" selected>Plan 2</option>
+                        <option value="plan4">Plan 4</option>
+                        <option value="plan5">Plan 5</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Balance *</label>
+                    <input type="number" id="debt-balance" class="form-input" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Interest Rate (%) *</label>
+                    <input type="number" id="debt-interest" class="form-input" step="0.01" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Minimum Monthly Payment</label>
+                    <input type="number" id="debt-min-payment" class="form-input" step="0.01">
+                </div>
+                <div id="credit-limit-group" class="form-group hidden">
+                    <label class="form-label">Credit Limit</label>
+                    <input type="number" id="debt-credit-limit" class="form-input" step="0.01">
+                </div>
+                <div id="term-group" class="form-group hidden">
+                    <label class="form-label">Term (Months)</label>
+                    <input type="number" id="debt-term" class="form-input">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn" onclick="closeDebtModal()">Cancel</button>
+                    <button type="submit" class="btn btn-danger">Save</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
