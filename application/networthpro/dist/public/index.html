@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NetWorthPro - Financial Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        .card { background: white; border-radius: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid #e2e8f0; }
+        .btn-primary { background: #0f172a; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s; }
+        .btn-primary:hover { background: #1e293b; }
+        .btn-secondary { background: #f1f5f9; color: #0f172a; padding: 0.5rem 1rem; border-radius: 0.5rem; transition: all 0.2s; }
+        .btn-secondary:hover { background: #e2e8f0; }
+        .active-tab { border-bottom: 2px solid #0f172a; color: #0f172a; font-weight: 600; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-900">
+    <!-- Sidebar / Navigation -->
+    <nav class="bg-white border-b border-slate-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center text-white">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <span class="text-xl font-bold tracking-tight">NetWorthPro</span>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <button onclick="showSection('dashboard')" id="tab-dashboard" class="nav-tab h-full flex items-center px-1 text-slate-500 hover:text-slate-900 active-tab">Dashboard</button>
+                    <button onclick="showSection('assets')" id="tab-assets" class="nav-tab h-full flex items-center px-1 text-slate-500 hover:text-slate-900">Assets</button>
+                    <button onclick="showSection('liabilities')" id="tab-liabilities" class="nav-tab h-full flex items-center px-1 text-slate-500 hover:text-slate-900">Liabilities</button>
+                    <button onclick="showSection('projections')" id="tab-projections" class="nav-tab h-full flex items-center px-1 text-slate-500 hover:text-slate-900">Projections</button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Dashboard Section -->
+        <section id="section-dashboard" class="space-y-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="card p-6">
+                    <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Net Worth</h3>
+                    <p id="stat-net-worth" class="text-3xl font-bold mt-2 text-slate-900">£0</p>
+                    <div class="mt-4 flex items-center text-sm text-emerald-600">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        <span>Real-time calculation</span>
+                    </div>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Assets</h3>
+                    <p id="stat-assets" class="text-3xl font-bold mt-2 text-slate-900">£0</p>
+                    <p id="stat-assets-breakdown" class="text-xs text-slate-400 mt-2">Cash, Stocks, Property</p>
+                </div>
+                <div class="card p-6">
+                    <h3 class="text-sm font-medium text-slate-500 uppercase tracking-wider">Total Liabilities</h3>
+                    <p id="stat-liabilities" class="text-3xl font-bold mt-2 text-rose-600">£0</p>
+                    <p id="stat-liabilities-breakdown" class="text-xs text-slate-400 mt-2">Loans, Credit Cards</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="card p-8">
+                    <h3 class="text-lg font-semibold mb-6">Asset Allocation</h3>
+                    <div id="allocation-chart" class="flex justify-center"></div>
+                    <div id="allocation-legend" class="mt-6 grid grid-cols-3 gap-4 text-center"></div>
+                </div>
+                <div class="card p-8">
+                    <h3 class="text-lg font-semibold mb-6">Financial Health Ratios</h3>
+                    <div class="space-y-6">
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm font-medium text-slate-600">Liquidity Ratio (Cash / Monthly Debt)</span>
+                                <span id="stat-liquidity-ratio" class="text-sm font-bold">0.0</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2">
+                                <div id="bar-liquidity" class="bg-emerald-500 h-2 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2">Target: > 3.0 (3 months of expenses)</p>
+                        </div>
+                        <div>
+                            <div class="flex justify-between mb-2">
+                                <span class="text-sm font-medium text-slate-600">Debt-to-Equity Ratio</span>
+                                <span id="stat-debt-equity" class="text-sm font-bold">0.0</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-2">
+                                <div id="bar-debt-equity" class="bg-rose-500 h-2 rounded-full" style="width: 0%"></div>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-2">Target: < 0.5 (Lower is better)</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Assets Section -->
+        <section id="section-assets" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Manage Assets</h2>
+                <button onclick="openModal('asset')" class="btn-primary">
+                    <i class="fas fa-plus mr-2"></i>Add Asset
+                </button>
+            </div>
+            <div class="card overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Name</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Type</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Value</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Bonus/Pending</th>
+                        </tr>
+                    </thead>
+                    <tbody id="assets-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Liabilities Section -->
+        <section id="section-liabilities" class="hidden space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Manage Liabilities</h2>
+                <button onclick="openModal('liability')" class="btn-primary">
+                    <i class="fas fa-plus mr-2"></i>Add Liability
+                </button>
+            </div>
+            <div class="card overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-slate-50 border-b border-slate-200">
+                        <tr>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Name</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase">Type</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Interest Rate</th>
+                            <th class="px-6 py-4 text-xs font-semibold text-slate-500 uppercase text-right">Balance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="liabilities-list"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Projections Section -->
+        <section id="section-projections" class="hidden space-y-8">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Financial Projections</h2>
+                <div class="flex items-center space-x-4">
+                    <label class="text-sm font-medium">Annual Growth Rate:</label>
+                    <select id="growth-rate" onchange="updateProjections()" class="bg-white border border-slate-200 rounded-md px-3 py-1 text-sm">
+                        <option value="0.04">4% (Conservative)</option>
+                        <option value="0.07" selected>7% (Moderate)</option>
+                        <option value="0.10">10% (Aggressive)</option>
+                    </select>
+                </div>
+            </div>
+            <div class="card p-8">
+                <h3 class="text-lg font-semibold mb-6">Net Worth Trendline (10 Years)</h3>
+                <div id="projection-chart" class="w-full h-64"></div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="card p-6">
+                    <h4 class="text-sm font-medium text-slate-500 uppercase">Estimated Debt-Free Date</h4>
+                    <p id="debt-free-date" class="text-2xl font-bold mt-2 text-slate-900">Calculating...</p>
+                </div>
+                <div class="card p-6">
+                    <h4 class="text-sm font-medium text-slate-500 uppercase">Projected 10-Year Net Worth</h4>
+                    <p id="projected-net-worth" class="text-2xl font-bold mt-2 text-emerald-600">£0</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modal for Adding Asset/Liability -->
+    <div id="modal" class="fixed inset-0 bg-slate-900/50 hidden z-[100] flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 w-full max-w-md shadow-2xl">
+            <h3 id="modal-title" class="text-xl font-bold mb-6">Add Item</h3>
+            <form id="modal-form" onsubmit="handleFormSubmit(event)" class="space-y-4">
+                <input type="hidden" id="modal-type">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Name</label>
+                    <input type="text" id="input-name" required class="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-slate-900 outline-none">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Category</label>
+                    <select id="input-category" class="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-slate-900 outline-none"></select>
+                </div>
+                <div id="field-value">
+                    <label class="block text-sm font-medium text-slate-700 mb-1">Value / Balance (£)</label>
+                    <input type="number" id="input-value" required step="0.01" class="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-slate-900 outline-none">
+                </div>
+                <div id="field-extra" class="hidden">
+                    <label id="label-extra" class="block text-sm font-medium text-slate-700 mb-1">Interest Rate (%)</label>
+                    <input type="number" id="input-extra" step="0.01" class="w-full border border-slate-200 rounded-lg px-4 py-2 focus:ring-2 focus:ring-slate-900 outline-none">
+                </div>
+                <div class="flex justify-end space-x-3 mt-8">
+                    <button type="button" onclick="closeModal()" class="btn-secondary">Cancel</button>
+                    <button type="submit" class="btn-primary">Save Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
