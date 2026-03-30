@@ -1,6 +1,3 @@
-# PersonalNetWorth
-Personal Net Worth and Debt tracker
-
 # Branch Prompt - 'BasicStart/Toby'
 
 Here was the original prompt given to Google Studio:

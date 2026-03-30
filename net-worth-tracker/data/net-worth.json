@@ -1,0 +1,14 @@
+{
+  "assets": [
+    { "id": 1, "name": "Checking Account", "value": 5200, "category": "Cash" },
+    { "id": 2, "name": "Savings Account", "value": 12500, "category": "Cash" },
+    { "id": 3, "name": "Brokerage Account", "value": 45000, "category": "Investments" },
+    { "id": 4, "name": "Retirement (401k)", "value": 85000, "category": "Investments" },
+    { "id": 5, "name": "Primary Residence", "value": 350000, "category": "Real Estate" }
+  ],
+  "liabilities": [
+    { "id": 6, "name": "Mortgage", "value": 210000, "category": "Loans" },
+    { "id": 7, "name": "Car Loan", "value": 15000, "category": "Loans" },
+    { "id": 8, "name": "Credit Card", "value": 1200, "category": "Credit" }
+  ]
+}

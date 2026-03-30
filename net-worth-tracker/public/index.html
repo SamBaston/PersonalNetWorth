@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Net Worth Tracker</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="dashboard">
+        <header class="header">
+            <div class="header-content">
+                <h1 class="app-title">Net Worth Tracker</h1>
+                <div class="net-worth-display">
+                    <span class="label">Total Net Worth</span>
+                    <h2 id="total-net-worth" class="value">$0.00</h2>
+                </div>
+            </div>
+        </header>
+
+        <div class="grid">
+            <section class="card">
+                <div class="card-header">
+                    <h3>Assets</h3>
+                    <span id="total-assets" class="total-value text-green">+$0.00</span>
+                </div>
+                <ul id="assets-list" class="item-list">
+                    <!-- Assets will be injected here -->
+                </ul>
+            </section>
+
+            <section class="card">
+                <div class="card-header">
+                    <h3>Liabilities</h3>
+                    <span id="total-liabilities" class="total-value text-red">-$0.00</span>
+                </div>
+                <ul id="liabilities-list" class="item-list">
+                    <!-- Liabilities will be injected here -->
+                </ul>
+            </section>
+        </div>
+    </main>
+    <script src="script.js"></script>
+</body>
+</html>

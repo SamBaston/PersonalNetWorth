@@ -1,0 +1,5 @@
+{
+  "name": "Net Worth Tracker",
+  "description": "A clean and minimal Express application to track assets, liabilities, and total net worth.",
+  "requestFramePermissions": []
+}
