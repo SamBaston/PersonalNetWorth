@@ -1,0 +1,65 @@
+{
+  "accounts": [
+    {
+      "id": "acc_001",
+      "name": "Current Account",
+      "type": "cash",
+      "balance": 4250.00,
+      "currency": "GBP",
+      "institution": "Barclays",
+      "lastUpdated": "2026-03-30T00:00:00.000Z"
+    },
+    {
+      "id": "acc_002",
+      "name": "Stocks & Shares ISA",
+      "type": "investment",
+      "balance": 18750.00,
+      "currency": "GBP",
+      "institution": "Vanguard",
+      "lastUpdated": "2026-03-30T00:00:00.000Z"
+    },
+    {
+      "id": "acc_003",
+      "name": "Savings Account",
+      "type": "savings",
+      "balance": 12000.00,
+      "currency": "GBP",
+      "institution": "Marcus",
+      "lastUpdated": "2026-03-30T00:00:00.000Z"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "txn_001",
+      "accountId": "acc_001",
+      "date": "2026-03-28",
+      "description": "Salary",
+      "amount": 3200.00,
+      "type": "income",
+      "category": "salary"
+    },
+    {
+      "id": "txn_002",
+      "accountId": "acc_001",
+      "date": "2026-03-29",
+      "description": "Grocery Shopping",
+      "amount": -87.50,
+      "type": "expense",
+      "category": "food"
+    },
+    {
+      "id": "txn_003",
+      "accountId": "acc_003",
+      "date": "2026-03-01",
+      "description": "Monthly Transfer",
+      "amount": 500.00,
+      "type": "income",
+      "category": "transfer"
+    }
+  ],
+  "settings": {
+    "currency": "GBP",
+    "displayName": "My Portfolio",
+    "theme": "dark"
+  }
+}

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wealth Tracker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+<div class="app-wrapper">
+
+  <!-- ─── SIDEBAR ───────────────────────────────────────── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">Wealth</div>
+      <div class="logo-sub">Portfolio Tracker</div>
+    </div>
+
+    <span class="nav-section-label">Overview</span>
+    <a class="nav-item active" href="#">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="1" y="1" width="5.5" height="5.5" rx="1"/>
+        <rect x="9.5" y="1" width="5.5" height="5.5" rx="1"/>
+        <rect x="1" y="9.5" width="5.5" height="5.5" rx="1"/>
+        <rect x="9.5" y="9.5" width="5.5" height="5.5" rx="1"/>
+      </svg>
+      Dashboard
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <rect x="1" y="3" width="14" height="10" rx="1.5"/>
+        <path d="M5 3V2M11 3V2"/>
+      </svg>
+      Accounts
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <path d="M2 8h12M8 2v12"/>
+        <circle cx="8" cy="8" r="6"/>
+      </svg>
+      Transactions
+    </a>
+
+    <span class="nav-section-label">Analysis</span>
+    <a class="nav-item" href="#">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <polyline points="1,12 5,7 9,9 15,3"/>
+      </svg>
+      Performance
+    </a>
+    <a class="nav-item" href="#">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+        <circle cx="8" cy="8" r="6"/>
+        <path d="M8 8L12 4M8 8L8 2"/>
+      </svg>
+      Allocation
+    </a>
+
+    <div class="sidebar-footer">
+      <span class="status-dot"></span>
+      &nbsp; API Connected
+    </div>
+  </aside>
+
+  <!-- ─── HEADER ────────────────────────────────────────── -->
+  <header>
+    <div>
+      <div class="header-title">Dashboard</div>
+      <div class="header-date" id="header-date"></div>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" id="btn-refresh">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+          <path d="M14 8A6 6 0 1 1 8 2"/>
+          <polyline points="14,2 14,8 8,8"/>
+        </svg>
+        Refresh
+      </button>
+      <button class="btn btn-primary">
+        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M8 2v12M2 8h12"/>
+        </svg>
+        Add Account
+      </button>
+    </div>
+  </header>
+
+  <!-- ─── MAIN ──────────────────────────────────────────── -->
+  <main>
+
+    <!-- API status banner -->
+    <div id="api-status"></div>
+
+    <!-- Net Worth Hero -->
+    <div class="net-worth-hero">
+      <div class="net-worth-label">Total Net Worth</div>
+      <div class="net-worth-value" id="net-worth-value">
+        <span class="loading-shimmer" style="width:260px;height:3rem;display:inline-block;border-radius:6px"></span>
+      </div>
+      <div class="net-worth-sub" id="net-worth-sub">Loading portfolio data…</div>
+      <div class="net-worth-breakdown" id="net-worth-breakdown">
+        <div class="breakdown-item">
+          <div class="breakdown-label">Cash</div>
+          <div class="breakdown-value loading-shimmer" style="width:80px"></div>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-label">Savings</div>
+          <div class="breakdown-value loading-shimmer" style="width:80px"></div>
+        </div>
+        <div class="breakdown-item">
+          <div class="breakdown-label">Investments</div>
+          <div class="breakdown-value loading-shimmer" style="width:80px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Account Cards -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+      <span style="font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted)">Accounts</span>
+      <a href="#" class="btn btn-ghost" style="padding:6px 12px">View All</a>
+    </div>
+    <div class="grid-3" id="accounts-grid">
+      <!-- loaded by JS -->
+      <div class="card"><div class="loading-shimmer" style="height:100px"></div></div>
+      <div class="card"><div class="loading-shimmer" style="height:100px"></div></div>
+      <div class="card"><div class="loading-shimmer" style="height:100px"></div></div>
+    </div>
+
+    <!-- Recent Transactions -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin:28px 0 14px">
+      <span style="font-size:.62rem;letter-spacing:.2em;text-transform:uppercase;color:var(--text-muted)">Recent Transactions</span>
+      <a href="#" class="btn btn-ghost" style="padding:6px 12px">View All</a>
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Description</th>
+              <th>Category</th>
+              <th>Amount</th>
+            </tr>
+          </thead>
+          <tbody id="transactions-body">
+            <tr><td colspan="4"><div class="loading-shimmer" style="height:40px;margin:8px 16px"></div></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
