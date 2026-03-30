@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NetWorth — Personal Finance Tracker</title>
+
+  <!-- Bootstrap 5.3 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" />
+  <!-- Bootstrap Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css" />
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- ─── Top Navigation ─────────────────────────────────────────────── -->
+  <nav class="nw-nav" id="mainNav">
+    <div class="nw-nav__brand">
+      <span class="nw-nav__logo">◈</span>
+      <span class="nw-nav__title">NetWorth</span>
+    </div>
+    <ul class="nw-nav__links" id="navLinks">
+      <li><a href="#" class="nw-nav__link active" data-nav="dashboard"><i class="bi bi-grid-1x2"></i><span>Dashboard</span></a></li>
+      <li><a href="#" class="nw-nav__link" data-nav="accounts"><i class="bi bi-bank"></i><span>Accounts</span></a></li>
+      <li><a href="#" class="nw-nav__link" data-nav="debts"><i class="bi bi-credit-card"></i><span>Debts</span></a></li>
+      <li><a href="#" class="nw-nav__link" data-nav="projections"><i class="bi bi-graph-up-arrow"></i><span>Projections</span></a></li>
+    </ul>
+    <button class="nw-nav__hamburger" id="hamburger" aria-label="Toggle menu">
+      <i class="bi bi-list"></i>
+    </button>
+  </nav>
+
+  <!-- ─── App Container ──────────────────────────────────────────────── -->
+  <main id="app">
+
+    <!-- DASHBOARD VIEW -->
+    <div id="view-dashboard" class="view active">
+      <div class="view-header">
+        <h1 class="view-title">Overview</h1>
+        <span class="view-subtitle" id="dashboard-date"></span>
+      </div>
+
+      <!-- Net Worth Hero -->
+      <section class="hero-card" id="heroCard">
+        <div class="hero-card__label">Total Net Worth</div>
+        <div class="hero-card__amount" id="heroNetWorth">—</div>
+        <div class="hero-card__meta">
+          <span>Assets: <strong id="heroAssets">—</strong></span>
+          <span class="hero-card__divider">|</span>
+          <span>Liabilities: <strong id="heroDebts">—</strong></span>
+        </div>
+      </section>
+
+      <!-- Stat Cards -->
+      <div class="stats-row" id="statsRow">
+        <div class="stat-card" id="statMonthlyInterest">
+          <div class="stat-card__icon"><i class="bi bi-arrow-up-circle"></i></div>
+          <div class="stat-card__body">
+            <div class="stat-card__label">Monthly Interest Cost</div>
+            <div class="stat-card__value" id="statInterestVal">—</div>
+          </div>
+        </div>
+        <div class="stat-card" id="statDebtEquity">
+          <div class="stat-card__icon"><i class="bi bi-bar-chart-steps"></i></div>
+          <div class="stat-card__body">
+            <div class="stat-card__label">Debt-to-Asset Ratio</div>
+            <div class="stat-card__value" id="statD2EVal">—</div>
+          </div>
+        </div>
+        <div class="stat-card" id="statLiquidity">
+          <div class="stat-card__icon"><i class="bi bi-droplet-half"></i></div>
+          <div class="stat-card__body">
+            <div class="stat-card__label">Liquidity Ratio</div>
+            <div class="stat-card__value" id="statLiqVal">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts Row -->
+      <div class="row g-4 mt-1">
+        <div class="col-lg-5">
+          <div class="nw-card">
+            <div class="nw-card__header">
+              <span>Asset Allocation</span>
+            </div>
+            <div class="nw-card__body chart-wrap">
+              <canvas id="allocationChart"></canvas>
+              <div class="chart-legend" id="allocationLegend"></div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="nw-card">
+            <div class="nw-card__header">
+              <span>Top Accounts</span>
+              <a href="#" class="nw-card__action" data-nav="accounts">View all →</a>
+            </div>
+            <div class="nw-card__body" id="dashboardAccounts">
+              <div class="skeleton-loader"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Debts Summary -->
+      <div class="nw-card mt-4">
+        <div class="nw-card__header">
+          <span>Liabilities Overview</span>
+          <a href="#" class="nw-card__action" data-nav="debts">View all →</a>
+        </div>
+        <div class="nw-card__body" id="dashboardDebts">
+          <div class="skeleton-loader"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACCOUNTS VIEW -->
+    <div id="view-accounts" class="view">
+      <div class="view-header">
+        <div>
+          <h1 class="view-title">Accounts & Assets</h1>
+          <span class="view-subtitle">All your financial assets in one place</span>
+        </div>
+        <button class="nw-btn nw-btn--primary" data-bs-toggle="modal" data-bs-target="#addAccountModal">
+          <i class="bi bi-plus-lg"></i> Add Account
+        </button>
+      </div>
+
+      <!-- Filter Pills -->
+      <div class="filter-pills" id="accountFilters">
+        <button class="pill active" data-filter="">All</button>
+        <button class="pill" data-filter="current">Current</button>
+        <button class="pill" data-filter="savings">Savings</button>
+        <button class="pill" data-filter="isa">ISA</button>
+        <button class="pill" data-filter="lisa">LISA</button>
+        <button class="pill" data-filter="stocks">Stocks</button>
+        <button class="pill" data-filter="property">Property</button>
+      </div>
+
+      <div id="accountsList" class="entity-grid">
+        <div class="skeleton-loader"></div>
+      </div>
+    </div>
+
+    <!-- DEBTS VIEW -->
+    <div id="view-debts" class="view">
+      <div class="view-header">
+        <div>
+          <h1 class="view-title">Debts & Liabilities</h1>
+          <span class="view-subtitle">Track what you owe</span>
+        </div>
+        <button class="nw-btn nw-btn--danger" data-bs-toggle="modal" data-bs-target="#addDebtModal">
+          <i class="bi bi-plus-lg"></i> Add Debt
+        </button>
+      </div>
+
+      <div id="debtsList" class="entity-grid">
+        <div class="skeleton-loader"></div>
+      </div>
+    </div>
+
+    <!-- PROJECTIONS VIEW -->
+    <div id="view-projections" class="view">
+      <div class="view-header">
+        <h1 class="view-title">Projections</h1>
+        <span class="view-subtitle">Modelled growth scenarios for your net worth</span>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-12">
+          <div class="nw-card">
+            <div class="nw-card__header">
+              <span>Net Worth Growth Scenarios</span>
+              <div class="rate-selector" id="rateSelector">
+                <button class="rate-btn active" data-rate="4">4% p.a.</button>
+                <button class="rate-btn" data-rate="7">7% p.a.</button>
+                <button class="rate-btn" data-rate="10">10% p.a.</button>
+              </div>
+            </div>
+            <div class="nw-card__body chart-wrap chart-wrap--tall">
+              <canvas id="projectionChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="col-12">
+          <div class="nw-card">
+            <div class="nw-card__header"><span>Projection Table</span></div>
+            <div class="nw-card__body">
+              <div class="table-responsive">
+                <table class="nw-table" id="projectionTable">
+                  <thead>
+                    <tr>
+                      <th>Horizon</th>
+                      <th>4% p.a.</th>
+                      <th>7% p.a.</th>
+                      <th>10% p.a.</th>
+                    </tr>
+                  </thead>
+                  <tbody id="projectionTableBody">
+                    <tr><td colspan="4" class="text-center text-muted">Loading…</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </main><!-- /#app -->
+
+  <!-- ─── Toast Container ─────────────────────────────────────────────── -->
+  <div class="toast-container position-fixed bottom-0 end-0 p-3" id="toastContainer"></div>
+
+  <!-- ─── Add Account Modal ───────────────────────────────────────────── -->
+  <div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content nw-modal">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addAccountModalLabel">Add Account</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="accountFormError" class="nw-alert nw-alert--danger d-none"></div>
+          <div class="mb-3">
+            <label class="form-label">Account Name <span class="required">*</span></label>
+            <input type="text" class="form-control nw-input" id="accName" placeholder="e.g. Barclays Current Account" />
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">Type <span class="required">*</span></label>
+              <select class="form-select nw-input" id="accType">
+                <option value="">Select type…</option>
+                <option value="current">Current Account</option>
+                <option value="savings">Savings Account</option>
+                <option value="isa">Stocks & Shares ISA</option>
+                <option value="lisa">Lifetime ISA (LISA)</option>
+                <option value="stocks">Stock Portfolio</option>
+                <option value="property">Property</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Balance (£) <span class="required">*</span></label>
+              <input type="number" step="0.01" min="0" class="form-control nw-input" id="accBalance" placeholder="0.00" />
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Institution</label>
+            <input type="text" class="form-control nw-input" id="accInstitution" placeholder="e.g. Vanguard, Barclays" />
+          </div>
+          <!-- LISA-specific fields (shown/hidden by JS) -->
+          <div id="lisaFields" class="lisa-fields d-none">
+            <hr class="nw-divider" />
+            <div class="lisa-badge"><i class="bi bi-gift-fill"></i> LISA Government Bonus</div>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label">Bonus Amount (£)</label>
+                <input type="number" step="0.01" min="0" class="form-control nw-input" id="accLisaBonus" placeholder="Auto: 25%" />
+              </div>
+              <div class="col-6">
+                <label class="form-label">Bonus Status</label>
+                <select class="form-select nw-input" id="accLisaBonusStatus">
+                  <option value="pending">Pending</option>
+                  <option value="received">Received</option>
+                </select>
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <input type="text" class="form-control nw-input" id="accNotes" placeholder="Optional" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="nw-btn nw-btn--ghost" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="nw-btn nw-btn--primary" id="saveAccountBtn">
+            <span id="saveAccountBtnText">Save Account</span>
+            <span id="saveAccountSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── Add Debt Modal ──────────────────────────────────────────────── -->
+  <div class="modal fade" id="addDebtModal" tabindex="-1" aria-labelledby="addDebtModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content nw-modal">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addDebtModalLabel">Add Debt</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div id="debtFormError" class="nw-alert nw-alert--danger d-none"></div>
+          <div class="mb-3">
+            <label class="form-label">Debt Name <span class="required">*</span></label>
+            <input type="text" class="form-control nw-input" id="debtName" placeholder="e.g. Student Loan Plan 2" />
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">Type <span class="required">*</span></label>
+              <select class="form-select nw-input" id="debtType">
+                <option value="">Select type…</option>
+                <option value="student_loan">Student Loan</option>
+                <option value="credit_card">Credit Card</option>
+                <option value="mortgage">Mortgage</option>
+                <option value="personal_loan">Personal Loan</option>
+              </select>
+            </div>
+            <div class="col-6">
+              <label class="form-label">Outstanding Balance (£) <span class="required">*</span></label>
+              <input type="number" step="0.01" min="0" class="form-control nw-input" id="debtBalance" placeholder="0.00" />
+            </div>
+          </div>
+          <div class="row g-3 mb-3">
+            <div class="col-6">
+              <label class="form-label">Annual Interest Rate (%)</label>
+              <input type="number" step="0.01" min="0" class="form-control nw-input" id="debtRate" placeholder="e.g. 7.3" />
+            </div>
+            <div class="col-6">
+              <label class="form-label">Min. Monthly Payment (£)</label>
+              <input type="number" step="0.01" min="0" class="form-control nw-input" id="debtPayment" placeholder="0.00" />
+            </div>
+          </div>
+          <!-- Student loan specific fields -->
+          <div id="studentLoanFields" class="student-loan-fields d-none">
+            <hr class="nw-divider" />
+            <div class="loan-badge"><i class="bi bi-mortarboard-fill"></i> Student Loan Details</div>
+            <div class="row g-3 mb-3">
+              <div class="col-6">
+                <label class="form-label">Loan Plan</label>
+                <select class="form-select nw-input" id="debtPlan">
+                  <option value="plan1">Plan 1</option>
+                  <option value="plan2" selected>Plan 2</option>
+                  <option value="plan5">Plan 5 (Postgrad)</option>
+                </select>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Repayment Threshold (£)</label>
+                <input type="number" class="form-control nw-input" id="debtThreshold" value="27295" />
+              </div>
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <input type="text" class="form-control nw-input" id="debtNotes" placeholder="Optional" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="nw-btn nw-btn--ghost" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="nw-btn nw-btn--danger" id="saveDebtBtn">
+            <span id="saveDebtBtnText">Save Debt</span>
+            <span id="saveDebtSpinner" class="spinner-border spinner-border-sm d-none" role="status"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap Bundle JS (includes Popper) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <!-- App JS -->
+  <script src="app.js"></script>
+</body>
+</html>
