@@ -1,0 +1,5 @@
+{
+  "name": "Net Worth Tracker",
+  "description": "A comprehensive financial tracking application designed to consolidate assets and debt to calculate real-time net worth and project future financial standing.",
+  "requestFramePermissions": []
+}
