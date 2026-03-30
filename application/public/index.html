@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Personal Wealth Tracker</title>
+    <meta name="description" content="A sleek, modern application to track your personal assets, liabilities, and overall net worth.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Net Worth Tracker</h1>
+            <p>Your financial snapshot at a glance.</p>
+        </header>
+        
+        <main>
+            <div class="dashboard">
+                <div class="card total-net-worth">
+                    <h2>Total Net Worth</h2>
+                    <div class="amount" id="net-worth-amount">$0.00</div>
+                </div>
+                
+                <div class="details-section">
+                    <div class="card assets">
+                        <h3>Assets</h3>
+                        <ul id="assets-list" class="item-list">
+                            <li><span class="item-name" style="color: var(--text-secondary)">Loading...</span></li>
+                        </ul>
+                        <div class="total">
+                            <span>Total Assets:</span>
+                            <span id="total-assets" class="positive">$0.00</span>
+                        </div>
+                    </div>
+
+                    <div class="card liabilities">
+                        <h3>Liabilities</h3>
+                        <ul id="liabilities-list" class="item-list">
+                            <li><span class="item-name" style="color: var(--text-secondary)">Loading...</span></li>
+                        </ul>
+                        <div class="total">
+                            <span>Total Liabilities:</span>
+                            <span id="total-liabilities" class="negative">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>

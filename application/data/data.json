@@ -1,0 +1,11 @@
+{
+  "assets": [
+    { "name": "Checking Account", "value": 5000 },
+    { "name": "Savings Account", "value": 15000 },
+    { "name": "Investment Portfolio", "value": 25000 }
+  ],
+  "liabilities": [
+    { "name": "Credit Card", "value": 1200 },
+    { "name": "Car Loan", "value": 8500 }
+  ]
+}
