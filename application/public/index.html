@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Wealth Tracker</title>
+    <title>WealthWise | Personal Net Worth Tracker</title>
     <meta name="description" content="A sleek, modern application to track your personal assets, liabilities, and overall net worth.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
@@ -11,43 +11,148 @@
 <body>
     <div class="container">
         <header>
-            <h1>Net Worth Tracker</h1>
-            <p>Your financial snapshot at a glance.</p>
+            <h1>WealthWise</h1>
+            <p>Advanced Personal Net Worth Tracker</p>
         </header>
         
         <main>
             <div class="dashboard">
                 <div class="card total-net-worth">
-                    <h2>Total Net Worth</h2>
+                    <h2>Total Assets</h2>
                     <div class="amount" id="net-worth-amount">$0.00</div>
                 </div>
+
+                <div class="insights-grid">
+                    <div class="card isa-tracker">
+                        <h3>ISA Allowance</h3>
+                        <div class="isa-progress-container">
+                            <div class="progress-bar">
+                                <div id="isa-progress" class="progress-fill"></div>
+                            </div>
+                            <div class="isa-stats">
+                                <span id="isa-used">$0.00 used</span>
+                                <span id="isa-remaining">$20,000 left</span>
+                            </div>
+                        </div>
+                        <div id="lisa-limit-warning" class="warning-text" style="display: none;">LISA Contribution Limit Reached (£4,000)</div>
+                    </div>
+                    <div class="card growth-projection">
+                        <h3>12-Month Projection</h3>
+                        <div class="projection-amount" id="projected-amount">$0.00</div>
+                        <p class="projection-desc">Estimated growth based on interest & stock returns.</p>
+                    </div>
+                </div>
                 
-                <div class="details-section">
+                <div class="details-section single-column">
                     <div class="card assets">
-                        <h3>Assets</h3>
+                        <div class="card-header">
+                            <h3>Assets</h3>
+                            <button id="add-asset-btn" class="btn-primary">+ Add Asset</button>
+                        </div>
                         <ul id="assets-list" class="item-list">
                             <li><span class="item-name" style="color: var(--text-secondary)">Loading...</span></li>
                         </ul>
-                        <div class="total">
-                            <span>Total Assets:</span>
-                            <span id="total-assets" class="positive">$0.00</span>
-                        </div>
-                    </div>
-
-                    <div class="card liabilities">
-                        <h3>Liabilities</h3>
-                        <ul id="liabilities-list" class="item-list">
-                            <li><span class="item-name" style="color: var(--text-secondary)">Loading...</span></li>
-                        </ul>
-                        <div class="total">
-                            <span>Total Liabilities:</span>
-                            <span id="total-liabilities" class="negative">$0.00</span>
-                        </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
+
+    <!-- Modals -->
+    <div id="asset-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Add New Asset</h3>
+                <span class="close-modal">&times;</span>
+            </div>
+            <form id="asset-form">
+                <div class="form-group">
+                    <label>Asset Type</label>
+                    <select id="asset-type" required>
+                        <option value="bank">Bank Account</option>
+                        <option value="isa">Cash ISA</option>
+                        <option value="lisa">Lifetime ISA (LISA)</option>
+                        <option value="stock">Stocks / Portfolio</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="asset-name" placeholder="e.g. Barclays Savings" required>
+                </div>
+                <div class="form-group">
+                    <label>Initial Balance</label>
+                    <input type="number" id="asset-value" step="0.01" required>
+                </div>
+                <div id="bank-fields">
+                    <div class="form-group">
+                        <label>Interest Rate (%)</label>
+                        <input type="number" id="asset-interest" step="0.1" value="0">
+                    </div>
+                </div>
+                <div id="stock-fields" style="display: none;">
+                    <div class="form-group">
+                        <label>Ticker Symbol</label>
+                        <input type="text" id="asset-ticker" placeholder="AAPL">
+                    </div>
+                    <div class="form-group">
+                        <label>Estimated Annual Return (%)</label>
+                        <input type="number" id="asset-return" step="0.1" value="7.0">
+                    </div>
+                </div>
+                <div id="isa-fields" style="display: none;">
+                    <div class="form-group">
+                        <label>Contribution This Year</label>
+                        <input type="number" id="asset-contribution" step="0.01" value="0">
+                    </div>
+                </div>
+                <button type="submit" class="btn-submit">Create Asset</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Balance Adjustment Modal -->
+    <div id="balance-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="balance-modal-title">Adjust Balance</h3>
+                <span class="close-balance-modal">&times;</span>
+            </div>
+            <form id="balance-form">
+                <input type="hidden" id="balance-asset-id">
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" id="balance-amount" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="balance-actions">
+                    <button type="button" id="btn-withdraw" class="btn-submit btn-negative">Withdraw</button>
+                    <button type="button" id="btn-deposit" class="btn-submit btn-positive">Deposit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirm-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Action</h3>
+                <span class="close-confirm-modal">&times;</span>
+            </div>
+            <p id="confirm-message" style="margin-bottom: 2rem; color: var(--text-secondary);"></p>
+            <div class="balance-actions">
+                <button type="button" id="btn-confirm-cancel" class="btn-submit" style="background: rgba(255,255,255,0.1);">Cancel</button>
+                <button type="button" id="btn-confirm-action" class="btn-submit btn-negative">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notification-toast" class="notification-toast">
+        <div class="notification-content">
+            <span id="notification-message"></span>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>

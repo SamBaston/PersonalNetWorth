@@ -3,7 +3,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = 3000; // Hardcoded to 3000 as per guidelines
 
 // Middleware to parse JSON
 app.use(express.json());
@@ -11,10 +11,11 @@ app.use(express.json());
 // Serve static files from the public folder
 app.use(express.static(path.join(__dirname, '../public')));
 
+const DATA_PATH = path.join(__dirname, '../data/data.json');
+
 // API Endpoint to get wealth data
 app.get('/api/wealth', (req, res) => {
-    const dataPath = path.join(__dirname, '../data/data.json');
-    fs.readFile(dataPath, 'utf8', (err, data) => {
+    fs.readFile(DATA_PATH, 'utf8', (err, data) => {
         if (err) {
             console.error('Error reading data:', err);
             return res.status(500).json({ error: 'Failed to read data' });
@@ -26,6 +27,23 @@ app.get('/api/wealth', (req, res) => {
             console.error('Error parsing JSON:', parseErr);
             res.status(500).json({ error: 'Failed to parse data' });
         }
+    });
+});
+
+// API Endpoint to save wealth data
+app.post('/api/wealth', (req, res) => {
+    const newData = req.body;
+    // Ensure we only save assets
+    const dataToSave = {
+        assets: newData.assets || []
+    };
+    
+    fs.writeFile(DATA_PATH, JSON.stringify(dataToSave, null, 2), 'utf8', (err) => {
+        if (err) {
+            console.error('Error writing data:', err);
+            return res.status(500).json({ error: 'Failed to save data' });
+        }
+        res.json({ success: true });
     });
 });
 
