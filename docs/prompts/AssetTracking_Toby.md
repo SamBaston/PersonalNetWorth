@@ -49,3 +49,11 @@ package.json
 Do not use any frameworks such as react, only use Express and Node.js.
 The file structure should be exactly as specified.
 ```
+
+The product produced by Google Studio lacked several features that we wanted from the feature spec, so the following prompts were used to further develop the feature:
+```text
+You should be able to add and remove balance in any user defined amount, not just in set increments. Also, liabilities should not be included in this version. Also take into account the specific LISA limit of 4000 per tax year.
+```
+```text
+You should also be able to fully delete an asset, and should be alerted if you are paying too much into either a LISA or a generic ISA.
+```

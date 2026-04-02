@@ -1,10 +1,18 @@
 {
   "assets": [
-    { "id": "1", "name": "Barclays Savings", "value": 5000, "type": "bank", "interestRate": 2.5 },
-    { "id": "2", "name": "LISA", "value": 4000, "type": "lisa", "contributionThisYear": 4000 },
-    { "id": "3", "name": "Vanguard S&P 500", "value": 10000, "type": "stock", "ticker": "VOO", "estimatedReturn": 7.0 }
-  ],
-  "liabilities": [
-    { "id": "4", "name": "Credit Card", "value": 1200 }
+    {
+      "id": "1",
+      "name": "Barclays Savings",
+      "value": 5000,
+      "type": "bank",
+      "interestRate": 2.5
+    },
+    {
+      "id": "2",
+      "name": "LISA",
+      "value": 4000,
+      "type": "lisa",
+      "contributionThisYear": 4000
+    }
   ]
 }

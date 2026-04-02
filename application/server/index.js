@@ -33,7 +33,12 @@ app.get('/api/wealth', (req, res) => {
 // API Endpoint to save wealth data
 app.post('/api/wealth', (req, res) => {
     const newData = req.body;
-    fs.writeFile(DATA_PATH, JSON.stringify(newData, null, 2), 'utf8', (err) => {
+    // Ensure we only save assets
+    const dataToSave = {
+        assets: newData.assets || []
+    };
+    
+    fs.writeFile(DATA_PATH, JSON.stringify(dataToSave, null, 2), 'utf8', (err) => {
         if (err) {
             console.error('Error writing data:', err);
             return res.status(500).json({ error: 'Failed to save data' });

@@ -3,15 +3,17 @@ document.addEventListener('DOMContentLoaded', () => {
     setupEventListeners();
 });
 
-let wealthData = { assets: [], liabilities: [] };
+let wealthData = { assets: [] };
 const ISA_LIMIT = 20000;
+const LISA_ANNUAL_LIMIT = 4000;
 const LISA_BONUS_RATE = 0.25;
 
 async function fetchWealthData() {
     try {
         const response = await fetch('/api/wealth');
         if (!response.ok) throw new Error('Network response was not ok');
-        wealthData = await response.json();
+        const data = await response.json();
+        wealthData.assets = data.assets || [];
         updateDashboard();
     } catch (error) {
         console.error('Error fetching wealth data:', error);
@@ -24,7 +26,7 @@ async function saveWealthData() {
         const response = await fetch('/api/wealth', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(wealthData)
+            body: JSON.stringify({ assets: wealthData.assets })
         });
         if (!response.ok) throw new Error('Failed to save data');
         updateDashboard();
@@ -35,15 +37,13 @@ async function saveWealthData() {
 
 function updateDashboard() {
     const assetsList = document.getElementById('assets-list');
-    const liabilitiesList = document.getElementById('liabilities-list');
     
     let totalAssets = 0;
-    let totalLiabilities = 0;
     let totalISAContribution = 0;
+    let totalLISAContribution = 0;
     let projectedGrowth = 0;
 
     assetsList.innerHTML = '';
-    liabilitiesList.innerHTML = '';
 
     // Process Assets
     wealthData.assets.forEach((asset, index) => {
@@ -52,6 +52,9 @@ function updateDashboard() {
         // ISA Tracking
         if (asset.type === 'isa' || asset.type === 'lisa') {
             totalISAContribution += (asset.contributionThisYear || 0);
+            if (asset.type === 'lisa') {
+                totalLISAContribution += (asset.contributionThisYear || 0);
+            }
         }
 
         // Growth Projection (12 months)
@@ -63,24 +66,17 @@ function updateDashboard() {
         assetsList.appendChild(createAssetItem(asset, index));
     });
 
-    // Process Liabilities
-    wealthData.liabilities.forEach((liability, index) => {
-        totalLiabilities += liability.value;
-        liabilitiesList.appendChild(createLiabilityItem(liability, index));
-    });
-
-    const netWorth = totalAssets - totalLiabilities;
+    const netWorth = totalAssets;
 
     // Update UI
-    document.getElementById('total-assets').textContent = formatCurrency(totalAssets);
-    document.getElementById('total-liabilities').textContent = formatCurrency(totalLiabilities);
     document.getElementById('net-worth-amount').textContent = formatCurrency(netWorth);
-    document.getElementById('projected-amount').textContent = formatCurrency(projectedGrowth - totalLiabilities);
+    document.getElementById('projected-amount').textContent = formatCurrency(projectedGrowth);
 
     // ISA Progress
     const isaProgress = document.getElementById('isa-progress');
     const isaUsed = document.getElementById('isa-used');
     const isaRemaining = document.getElementById('isa-remaining');
+    const lisaWarning = document.getElementById('lisa-limit-warning');
     
     const percentage = Math.min((totalISAContribution / ISA_LIMIT) * 100, 100);
     isaProgress.style.width = `${percentage}%`;
@@ -91,6 +87,13 @@ function updateDashboard() {
         isaProgress.style.background = 'var(--negative)';
     } else {
         isaProgress.style.background = 'linear-gradient(to right, #a78bfa, #8b5cf6)';
+    }
+
+    // LISA Warning
+    if (totalLISAContribution >= LISA_ANNUAL_LIMIT) {
+        lisaWarning.style.display = 'block';
+    } else {
+        lisaWarning.style.display = 'none';
     }
 
     // Net worth color
@@ -115,37 +118,35 @@ function createAssetItem(asset, index) {
 
     const meta = document.createElement('div');
     meta.className = 'item-meta';
-    let metaText = '';
     if (asset.type === 'stock') {
-        metaText = `<span>${asset.ticker || 'STOCK'} • ${asset.estimatedReturn}% return</span>`;
+        meta.innerHTML = `<span>${asset.ticker || 'STOCK'} • ${asset.estimatedReturn}% return</span>`;
     } else {
-        metaText = `<span>${asset.type.toUpperCase()} • ${asset.interestRate || 0}% interest</span>`;
+        meta.innerHTML = `<span>${asset.type.toUpperCase()} • ${asset.interestRate || 0}% interest</span>`;
     }
-    meta.innerHTML = metaText;
 
     const actions = document.createElement('div');
     actions.className = 'item-actions';
     
-    const add100 = document.createElement('button');
-    add100.className = 'btn-action';
-    add100.textContent = '+£100';
-    add100.onclick = () => addBalance(asset.id, 100);
+    const adjustBtn = document.createElement('button');
+    adjustBtn.className = 'btn-action';
+    adjustBtn.textContent = 'Adjust Balance';
+    adjustBtn.onclick = () => openBalanceModal(asset.id);
 
-    const add1k = document.createElement('button');
-    add1k.className = 'btn-action';
-    add1k.textContent = '+£1k';
-    add1k.onclick = () => addBalance(asset.id, 1000);
-
-    actions.appendChild(add100);
-    actions.appendChild(add1k);
+    actions.appendChild(adjustBtn);
 
     if (asset.type === 'stock') {
         const refresh = document.createElement('button');
         refresh.className = 'btn-action';
-        refresh.innerHTML = 'Refresh';
+        refresh.innerHTML = 'Refresh Price';
         refresh.onclick = () => refreshStock(asset.id);
         actions.appendChild(refresh);
     }
+
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn-delete';
+    deleteBtn.textContent = 'Delete';
+    deleteBtn.onclick = () => deleteAsset(asset.id);
+    actions.appendChild(deleteBtn);
 
     li.appendChild(main);
     li.appendChild(meta);
@@ -153,43 +154,89 @@ function createAssetItem(asset, index) {
     return li;
 }
 
-function createLiabilityItem(liability, index) {
-    const li = document.createElement('li');
-    li.style.animationDelay = `${index * 0.05}s`;
-    li.innerHTML = `
-        <div class="item-main">
-            <span class="item-name">${liability.name}</span>
-            <span class="item-value negative">${formatCurrency(liability.value)}</span>
-        </div>
-    `;
-    return li;
-}
-
-async function addBalance(id, amount) {
+async function deleteAsset(id) {
     const asset = wealthData.assets.find(a => a.id === id);
     if (!asset) return;
 
-    let addedValue = amount;
-    if (asset.type === 'lisa') {
-        const bonus = amount * LISA_BONUS_RATE;
-        addedValue += bonus;
-        console.log(`LISA Bonus added: ${formatCurrency(bonus)}`);
-    }
+    showConfirm(`Are you sure you want to delete "${asset.name}"? This action cannot be undone.`, async () => {
+        wealthData.assets = wealthData.assets.filter(a => a.id !== id);
+        await saveWealthData();
+        showNotification(`Asset "${asset.name}" deleted.`);
+    });
+}
 
-    asset.value += addedValue;
-    if (asset.type === 'isa' || asset.type === 'lisa') {
-        asset.contributionThisYear = (asset.contributionThisYear || 0) + amount;
+function openBalanceModal(id) {
+    const asset = wealthData.assets.find(a => a.id === id);
+    if (!asset) return;
+
+    document.getElementById('balance-asset-id').value = id;
+    document.getElementById('balance-modal-title').textContent = `Adjust Balance: ${asset.name}`;
+    document.getElementById('balance-amount').value = '';
+    document.getElementById('balance-modal').style.display = 'block';
+}
+
+async function handleBalanceAdjustment(type) {
+    const id = document.getElementById('balance-asset-id').value;
+    const amount = parseFloat(document.getElementById('balance-amount').value);
+    const asset = wealthData.assets.find(a => a.id === id);
+
+    if (!asset || isNaN(amount) || amount <= 0) return;
+
+    if (type === 'deposit') {
+        // Check LISA limit
+        if (asset.type === 'lisa') {
+            const currentLISAContribution = wealthData.assets
+                .filter(a => a.type === 'lisa')
+                .reduce((sum, a) => sum + (a.contributionThisYear || 0), 0);
+            
+            if (currentLISAContribution + amount > LISA_ANNUAL_LIMIT) {
+                const allowed = LISA_ANNUAL_LIMIT - currentLISAContribution;
+                showNotification(`LISA contribution limit exceeded (£4,000). You can only add ${formatCurrency(allowed)} more this year.`);
+                return;
+            }
+        }
+
+        // Check overall ISA limit
+        if (asset.type === 'isa' || asset.type === 'lisa') {
+            const currentISAContribution = wealthData.assets
+                .filter(a => a.type === 'isa' || a.type === 'lisa')
+                .reduce((sum, a) => sum + (a.contributionThisYear || 0), 0);
+            
+            if (currentISAContribution + amount > ISA_LIMIT) {
+                const allowed = ISA_LIMIT - currentISAContribution;
+                showNotification(`Total ISA contribution limit exceeded (£20,000). You can only add ${formatCurrency(allowed)} more this year.`);
+                return;
+            }
+        }
+
+        let addedValue = amount;
+        if (asset.type === 'lisa') {
+            const bonus = amount * LISA_BONUS_RATE;
+            addedValue += bonus;
+        }
+
+        asset.value += addedValue;
+        if (asset.type === 'isa' || asset.type === 'lisa') {
+            asset.contributionThisYear = (asset.contributionThisYear || 0) + amount;
+        }
+    } else {
+        // Withdraw
+        if (asset.value < amount) {
+            showNotification('Insufficient funds.');
+            return;
+        }
+        asset.value -= amount;
     }
 
     await saveWealthData();
+    document.getElementById('balance-modal').style.display = 'none';
 }
 
 async function refreshStock(id) {
     const asset = wealthData.assets.find(a => a.id === id);
     if (!asset || asset.type !== 'stock') return;
 
-    // Simulate real-time fetching with a small random fluctuation
-    const fluctuation = (Math.random() - 0.45) * 0.02; // -0.9% to +1.1%
+    const fluctuation = (Math.random() - 0.45) * 0.02;
     asset.value = asset.value * (1 + fluctuation);
     
     await saveWealthData();
@@ -202,11 +249,23 @@ function setupEventListeners() {
     const assetForm = document.getElementById('asset-form');
     const assetType = document.getElementById('asset-type');
 
+    const balanceModal = document.getElementById('balance-modal');
+    const closeBalanceModal = document.querySelector('.close-balance-modal');
+    const btnDeposit = document.getElementById('btn-deposit');
+    const btnWithdraw = document.getElementById('btn-withdraw');
+
     addAssetBtn.onclick = () => assetModal.style.display = 'block';
     closeModal.onclick = () => assetModal.style.display = 'none';
+    
+    closeBalanceModal.onclick = () => balanceModal.style.display = 'none';
+
     window.onclick = (event) => {
         if (event.target == assetModal) assetModal.style.display = 'none';
+        if (event.target == balanceModal) balanceModal.style.display = 'none';
     };
+
+    btnDeposit.onclick = () => handleBalanceAdjustment('deposit');
+    btnWithdraw.onclick = () => handleBalanceAdjustment('withdraw');
 
     assetType.onchange = () => {
         const type = assetType.value;
@@ -219,16 +278,48 @@ function setupEventListeners() {
         e.preventDefault();
         
         const type = assetType.value;
+        const initialValue = parseFloat(document.getElementById('asset-value').value);
+        const contribution = parseFloat(document.getElementById('asset-contribution').value || 0);
+
+        // Validation for new ISA/LISA
+        if (type === 'lisa') {
+            const currentLISAContribution = wealthData.assets
+                .filter(a => a.type === 'lisa')
+                .reduce((sum, a) => sum + (a.contributionThisYear || 0), 0);
+            
+            if (currentLISAContribution + contribution > LISA_ANNUAL_LIMIT) {
+                const allowed = LISA_ANNUAL_LIMIT - currentLISAContribution;
+                showNotification(`LISA contribution limit exceeded (£4,000). You can only add ${formatCurrency(allowed)} more this year.`);
+                return;
+            }
+        }
+        
+        if (type === 'isa' || type === 'lisa') {
+            const currentISAContribution = wealthData.assets
+                .filter(a => a.type === 'isa' || a.type === 'lisa')
+                .reduce((sum, a) => sum + (a.contributionThisYear || 0), 0);
+            
+            if (currentISAContribution + contribution > ISA_LIMIT) {
+                const allowed = ISA_LIMIT - currentISAContribution;
+                showNotification(`Total ISA contribution limit exceeded (£20,000). You can only add ${formatCurrency(allowed)} more this year.`);
+                return;
+            }
+        }
+
         const newAsset = {
             id: Date.now().toString(),
             name: document.getElementById('asset-name').value,
-            value: parseFloat(document.getElementById('asset-value').value),
+            value: initialValue,
             type: type,
             interestRate: parseFloat(document.getElementById('asset-interest').value || 0),
             ticker: document.getElementById('asset-ticker').value,
             estimatedReturn: parseFloat(document.getElementById('asset-return').value || 0),
-            contributionThisYear: parseFloat(document.getElementById('asset-contribution').value || 0)
+            contributionThisYear: contribution
         };
+
+        if (type === 'lisa' && contribution > 0) {
+            newAsset.value += (contribution * LISA_BONUS_RATE);
+        }
 
         wealthData.assets.push(newAsset);
         await saveWealthData();
@@ -243,6 +334,42 @@ function formatCurrency(amount) {
         style: 'currency',
         currency: 'GBP'
     }).format(amount);
+}
+
+function showNotification(message) {
+    const toast = document.getElementById('notification-toast');
+    const msgEl = document.getElementById('notification-message');
+    msgEl.textContent = message;
+    toast.classList.add('show');
+    setTimeout(() => {
+        toast.classList.remove('show');
+    }, 4000);
+}
+
+function showConfirm(message, onConfirm) {
+    const modal = document.getElementById('confirm-modal');
+    const msgEl = document.getElementById('confirm-message');
+    const confirmBtn = document.getElementById('btn-confirm-action');
+    const cancelBtn = document.getElementById('btn-confirm-cancel');
+    const closeBtn = document.querySelector('.close-confirm-modal');
+
+    msgEl.textContent = message;
+    modal.style.display = 'block';
+
+    const cleanUp = () => {
+        modal.style.display = 'none';
+        confirmBtn.onclick = null;
+        cancelBtn.onclick = null;
+        closeBtn.onclick = null;
+    };
+
+    confirmBtn.onclick = () => {
+        onConfirm();
+        cleanUp();
+    };
+
+    cancelBtn.onclick = cleanUp;
+    closeBtn.onclick = cleanUp;
 }
 
 function showError() {

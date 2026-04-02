@@ -176,16 +176,10 @@ header p {
     color: var(--text-secondary);
 }
 
-.details-section {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 2rem;
-}
-
-@media (max-width: 768px) {
-    .details-section {
-        grid-template-columns: 1fr;
-    }
+.details-section.single-column {
+    grid-template-columns: 1fr;
+    max-width: 800px;
+    margin: 0 auto;
 }
 
 .card-header {
@@ -251,6 +245,36 @@ header p {
     color: var(--text-secondary);
 }
 
+.warning-text {
+    color: var(--negative);
+    font-size: 0.75rem;
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.balance-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.btn-positive {
+    background: var(--positive);
+}
+
+.btn-positive:hover {
+    background: #059669;
+}
+
+.btn-negative {
+    background: var(--negative);
+}
+
+.btn-negative:hover {
+    background: #dc2626;
+}
+
 .item-actions {
     display: flex;
     gap: 0.5rem;
@@ -271,6 +295,71 @@ header p {
 .btn-action:hover {
     background: rgba(255, 255, 255, 0.1);
     color: var(--text-primary);
+}
+
+.btn-delete {
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: var(--negative);
+    padding: 0.25rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-left: auto;
+}
+
+.btn-delete:hover {
+    background: var(--negative);
+    color: white;
+}
+
+.close-balance-modal {
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-balance-modal:hover {
+    color: var(--text-primary);
+}
+
+.close-confirm-modal {
+    color: var(--text-secondary);
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.close-confirm-modal:hover {
+    color: var(--text-primary);
+}
+
+/* Notification Toast */
+.notification-toast {
+    position: fixed;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%) translateY(100px);
+    background: var(--card-bg);
+    border: 1px solid var(--accent);
+    padding: 1rem 2rem;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+    z-index: 2000;
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    pointer-events: none;
+}
+
+.notification-toast.show {
+    transform: translateX(-50%) translateY(0);
+}
+
+.notification-content {
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.875rem;
 }
 
 /* Modals */
