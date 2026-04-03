@@ -1,11 +1,127 @@
 {
-  "assets": [
-    { "name": "Checking Account", "value": 5000 },
-    { "name": "Savings Account", "value": 15000 },
-    { "name": "Investment Portfolio", "value": 25000 }
-  ],
+  "assets": {
+    "bank_accounts": [
+      {
+        "id": "b1",
+        "name": "Barclays Current",
+        "type": "Current",
+        "balance": 1500,
+        "currency": "GBP",
+        "history": [
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "balance": 1500
+          }
+        ]
+      },
+      {
+        "id": "b2",
+        "name": "Monzo Savings",
+        "type": "Savings",
+        "balance": 5000,
+        "currency": "GBP",
+        "history": [
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "balance": 5000
+          }
+        ]
+      }
+    ],
+    "isas": [
+      {
+        "id": "i1",
+        "name": "Vanguard S&S ISA",
+        "type": "Stocks & Shares",
+        "balance": 12000,
+        "currency": "GBP",
+        "history": [
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "balance": 12000
+          }
+        ]
+      }
+    ],
+    "lisas": [
+      {
+        "id": "l1",
+        "name": "Moneybox LISA",
+        "type": "Cash",
+        "base_balance": 4000,
+        "pending_bonus": 1000,
+        "realized_bonus": 0,
+        "currency": "GBP",
+        "history": [
+          {
+            "date": "2026-01-01T00:00:00.000Z",
+            "base_balance": 3000,
+            "pending_bonus": 750
+          },
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "base_balance": 4000,
+            "pending_bonus": 1000
+          }
+        ]
+      }
+    ],
+    "stock_portfolios": [
+      {
+        "id": "p1",
+        "name": "Trading212",
+        "type": "manual",
+        "balance": 3500,
+        "currency": "GBP",
+        "history": [
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "balance": 3500
+          }
+        ]
+      },
+      {
+        "id": "p2",
+        "name": "Freetrade",
+        "type": "tickers",
+        "tickers": [
+          {
+            "symbol": "AAPL",
+            "quantity": 10
+          },
+          {
+            "symbol": "MSFT",
+            "quantity": 5
+          }
+        ],
+        "currency": "USD"
+      }
+    ]
+  },
   "liabilities": [
-    { "name": "Credit Card", "value": 1200 },
-    { "name": "Car Loan", "value": 8500 }
+    {
+      "id": "d1",
+      "name": "Credit Card",
+      "balance": 1200,
+      "currency": "GBP",
+      "history": [
+        {
+          "date": "2026-03-01T00:00:00.000Z",
+          "balance": 1200
+        }
+      ]
+    },
+    {
+      "id": "d2",
+      "name": "Car Loan",
+      "balance": 8500,
+      "currency": "GBP",
+      "history": [
+        {
+          "date": "2026-03-01T00:00:00.000Z",
+          "balance": 8500
+        }
+      ]
+    }
   ]
 }
