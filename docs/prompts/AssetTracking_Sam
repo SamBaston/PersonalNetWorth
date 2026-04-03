@@ -1,0 +1,36 @@
+For the asset tracking feature, I initially used this prompt:
+
+```text
+The next feature to add is asset tracking, which should follow this criteria:
+
+"Asset Tracking
+Bank Accounts: Support for multiple accounts (Current, Savings) with manual balance entry and currency support.
+ISAs & LISAs: * Tracking for UK tax-advantaged accounts.
+LISA logic: Include government bonus (25%) tracking as a separate pending or realized asset.
+Stock Portfolios:
+Input for individual ticker symbols or total portfolio value.
+Integration for real-time (or delayed) price fetching.
+"
+
+The data must be structured in such a way that will allow us to track debts in the future, and also make dashboards further down the line.
+```
+
+This was effective at adding in data structures and different types of assets, it failed at adding basic functionality like being able to edit, create or delete assets. Admitedly, this was not specifically labeled as a requirement in my prompt, but to a human developer this would appear as common sense.
+
+This also wouldn't allow for more complicated functionality like tracking a particular asset over a period of time, which would be interesting when it comes to making dashboards further down the line.
+
+I tried this additional prompt to see if it could fix these user issues and prepair for more complex functionality:
+
+```text
+
+the user should be able to edit, delete and create assets. there should also be able to track the value of such assets. for example, in the future a user should be able to see how their LISA has changed in value over a period of time
+
+```
+
+As a result, it added what I asked for, but did so in a very un-human way. For instance, it didn't simply add buttons to edit and delete things - it added the classic AI emoji-like buttons that no real person would add themselves. Similarly, the messages it provides are not designed for an end user, but for me instead:
+
+![AI popup box](image.png)
+
+It has done similar for debt's, providing a message that they have not been implemented yet. Again, a human would not add in a button that only presents a message to the user saying this feature isn't here yet, they would just not add the button. It seems the AI agent is only good at future planning for a system when specifically directed by the human.
+
+Interestingly, it has added more input validation that I would expect, not allowing for more than two decimal places, but does still allow for negative numbers, which would then not be an asset.
