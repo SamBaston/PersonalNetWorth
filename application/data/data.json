@@ -1,11 +1,94 @@
 {
-  "assets": [
-    { "name": "Checking Account", "value": 5000 },
-    { "name": "Savings Account", "value": 15000 },
-    { "name": "Investment Portfolio", "value": 25000 }
+  "bankAccounts": [
+    {
+      "id": "ba-1",
+      "name": "Barclays Current",
+      "type": "current",
+      "balance": 5000,
+      "currency": "GBP"
+    },
+    {
+      "id": "ba-2",
+      "name": "Nationwide Flex Saver",
+      "type": "savings",
+      "balance": 15000,
+      "currency": "GBP"
+    }
+  ],
+  "isaAccounts": [
+    {
+      "id": "isa-1",
+      "name": "Vanguard S&S ISA",
+      "type": "stocks_shares",
+      "provider": "Vanguard",
+      "balance": 20000,
+      "yearContribution": 15000,
+      "annualLimit": 20000,
+      "taxYear": "2024-25",
+      "currency": "GBP"
+    },
+    {
+      "id": "isa-2",
+      "name": "Marcus Cash ISA",
+      "type": "cash",
+      "provider": "Marcus",
+      "balance": 5000,
+      "yearContribution": 3000,
+      "annualLimit": 20000,
+      "taxYear": "2024-25",
+      "currency": "GBP"
+    }
+  ],
+  "lisaAccounts": [
+    {
+      "id": "lisa-1",
+      "name": "Moneybox LISA",
+      "type": "stocks_shares",
+      "provider": "Moneybox",
+      "balance": 8000,
+      "yearContribution": 4000,
+      "bonusPending": 1000,
+      "bonusReceived": 2500,
+      "currency": "GBP"
+    }
+  ],
+  "stockHoldings": [
+    {
+      "id": "sh-1",
+      "ticker": "AAPL",
+      "shares": 10,
+      "name": "AAPL",
+      "lastPrice": 258.83,
+      "currency": "USD",
+      "change": -0.37,
+      "changePercent": -0.1427,
+      "lastFetched": "2026-04-15T12:01:18.509Z",
+      "manualPrice": "100"
+    },
+    {
+      "id": "sh-2",
+      "ticker": "NVDA",
+      "shares": 5,
+      "name": "NVDA",
+      "lastPrice": 196.51,
+      "currency": "USD",
+      "change": 7.2,
+      "changePercent": 3.8033,
+      "lastFetched": "2026-04-15T12:01:18.510Z"
+    }
   ],
   "liabilities": [
-    { "name": "Credit Card", "value": 1200 },
-    { "name": "Car Loan", "value": 8500 }
+    {
+      "id": "li-1",
+      "name": "Credit Card",
+      "value": 1200,
+      "currency": "GBP"
+    },
+    {
+      "id": "li-2",
+      "name": "Car Loan",
+      "value": 8500,
+      "currency": "GBP"
+    }
   ]
 }

@@ -3,51 +3,215 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Wealth Tracker</title>
-    <meta name="description" content="A sleek, modern application to track your personal assets, liabilities, and overall net worth.">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>Wealth Tracker</title>
+    <meta name="description" content="Private wealth tracking — bank accounts, ISAs, LISAs, and stock portfolios.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Raleway:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>Net Worth Tracker</h1>
-            <p>Your financial snapshot at a glance.</p>
-        </header>
-        
-        <main>
-            <div class="dashboard">
-                <div class="card total-net-worth">
-                    <h2>Total Net Worth</h2>
-                    <div class="amount" id="net-worth-amount">$0.00</div>
-                </div>
-                
-                <div class="details-section">
-                    <div class="card assets">
-                        <h3>Assets</h3>
-                        <ul id="assets-list" class="item-list">
-                            <li><span class="item-name" style="color: var(--text-secondary)">Loading...</span></li>
-                        </ul>
-                        <div class="total">
-                            <span>Total Assets:</span>
-                            <span id="total-assets" class="positive">$0.00</span>
-                        </div>
-                    </div>
 
-                    <div class="card liabilities">
-                        <h3>Liabilities</h3>
-                        <ul id="liabilities-list" class="item-list">
-                            <li><span class="item-name" style="color: var(--text-secondary)">Loading...</span></li>
-                        </ul>
-                        <div class="total">
-                            <span>Total Liabilities:</span>
-                            <span id="total-liabilities" class="negative">$0.00</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </main>
+<!-- ── Header ──────────────────────────────────────────────────────────────── -->
+<header class="site-header">
+    <div class="header-inner">
+        <div class="brand">
+            <div class="brand-mark">◆</div>
+            <span class="brand-name">Wealth</span>
+        </div>
+        <div class="net-worth-hero">
+            <span class="nw-label">Total Net Worth</span>
+            <span class="nw-value" id="net-worth-amount">—</span>
+        </div>
+        <div class="header-meta" id="last-updated-label"></div>
     </div>
-    <script src="script.js"></script>
+</header>
+
+<!-- ── Summary Bar ─────────────────────────────────────────────────────────── -->
+<div class="summary-bar">
+    <div class="summary-inner">
+        <div class="summary-pill">
+            <span class="pill-label">Total Assets</span>
+            <span class="pill-value positive" id="sum-assets">—</span>
+        </div>
+        <div class="summary-pill">
+            <span class="pill-label">Liabilities</span>
+            <span class="pill-value negative" id="sum-liabilities">—</span>
+        </div>
+        <div class="summary-divider"></div>
+        <div class="summary-pill">
+            <span class="pill-label">Bank &amp; Cash</span>
+            <span class="pill-value" id="sum-bank">—</span>
+        </div>
+        <div class="summary-pill">
+            <span class="pill-label">ISAs</span>
+            <span class="pill-value" id="sum-isa">—</span>
+        </div>
+        <div class="summary-pill">
+            <span class="pill-label">LISAs</span>
+            <span class="pill-value" id="sum-lisa">—</span>
+        </div>
+        <div class="summary-pill">
+            <span class="pill-label">Stocks</span>
+            <span class="pill-value" id="sum-stocks">—</span>
+        </div>
+    </div>
+</div>
+
+<!-- ── Main ────────────────────────────────────────────────────────────────── -->
+<main class="main-content">
+
+    <!-- Tab Nav -->
+    <nav class="tab-nav">
+        <button class="tab-btn active" data-tab="bank">
+            <span class="tab-icon">⬡</span> Bank Accounts
+        </button>
+        <button class="tab-btn" data-tab="isa">
+            <span class="tab-icon">⬡</span> ISAs &amp; LISAs
+        </button>
+        <button class="tab-btn" data-tab="stocks">
+            <span class="tab-icon">⬡</span> Stock Portfolio
+        </button>
+        <button class="tab-btn" data-tab="liabilities">
+            <span class="tab-icon">⬡</span> Liabilities
+        </button>
+    </nav>
+
+    <!-- ── Bank Tab ──────────────────────────────────────────────────────────── -->
+    <section id="tab-bank" class="tab-section active">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Bank Accounts</h2>
+                <p class="section-sub">Current &amp; savings accounts across all currencies.</p>
+            </div>
+            <button class="btn-primary" onclick="openModal('bank')">+ Add Account</button>
+        </div>
+        <div id="bank-list" class="cards-grid"></div>
+        <div id="bank-empty" class="empty-state hidden">
+            <p class="empty-icon">🏦</p>
+            <p class="empty-text">No bank accounts yet.</p>
+            <button class="btn-primary" onclick="openModal('bank')">Add your first account</button>
+        </div>
+    </section>
+
+    <!-- ── ISA / LISA Tab ────────────────────────────────────────────────────── -->
+    <section id="tab-isa" class="tab-section">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">ISAs &amp; Lifetime ISAs</h2>
+                <p class="section-sub">UK tax-advantaged savings &amp; investment accounts.</p>
+            </div>
+            <div class="btn-group">
+                <button class="btn-primary" onclick="openModal('isa')">+ Add ISA</button>
+                <button class="btn-secondary" onclick="openModal('lisa')">+ Add LISA</button>
+            </div>
+        </div>
+
+        <div class="isa-allowance-banner" id="isa-allowance-banner">
+            <div class="allowance-left">
+                <span class="allowance-label">2024–25 ISA Allowance</span>
+                <span class="allowance-detail" id="allowance-detail">£0 used of £20,000</span>
+            </div>
+            <div class="allowance-bar-wrap">
+                <div class="allowance-bar">
+                    <div class="allowance-fill" id="allowance-fill" style="width:0%"></div>
+                </div>
+                <span class="allowance-pct" id="allowance-pct">0%</span>
+            </div>
+        </div>
+
+        <div class="subsection-label">Individual Savings Accounts</div>
+        <div id="isa-list" class="cards-grid"></div>
+        <div id="isa-empty" class="empty-state hidden">
+            <p class="empty-icon">📈</p>
+            <p class="empty-text">No ISA accounts yet.</p>
+            <button class="btn-primary" onclick="openModal('isa')">Add your first ISA</button>
+        </div>
+
+        <div class="subsection-label" style="margin-top:2.5rem;">Lifetime ISAs</div>
+        <div id="lisa-list" class="cards-grid"></div>
+        <div id="lisa-empty" class="empty-state hidden">
+            <p class="empty-icon">🏠</p>
+            <p class="empty-text">No LISA accounts yet.</p>
+            <button class="btn-secondary" onclick="openModal('lisa')">Add your first LISA</button>
+        </div>
+    </section>
+
+    <!-- ── Stocks Tab ────────────────────────────────────────────────────────── -->
+    <section id="tab-stocks" class="tab-section">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Stock Portfolio</h2>
+                <p class="section-sub">Equity holdings with live delayed pricing via Yahoo Finance.</p>
+            </div>
+            <div class="btn-group">
+                <button class="btn-icon" id="refresh-btn" onclick="refreshPrices()" title="Refresh all prices">
+                    <span id="refresh-icon">↻</span> Refresh Prices
+                </button>
+                <button class="btn-primary" onclick="openModal('stock')">+ Add Holding</button>
+            </div>
+        </div>
+
+        <div id="stock-prices-meta" class="prices-meta hidden">
+            Prices last fetched: <span id="prices-fetched-at">—</span>
+            <span class="prices-note">· Delayed data from Yahoo Finance</span>
+        </div>
+
+        <div id="stocks-table-wrap" class="table-wrap">
+            <table class="stocks-table" id="stocks-table">
+                <thead>
+                    <tr>
+                        <th>Ticker</th>
+                        <th>Name</th>
+                        <th class="text-right">Shares</th>
+                        <th class="text-right">Price</th>
+                        <th class="text-right">Day Change</th>
+                        <th class="text-right">Value</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="stocks-tbody"></tbody>
+                <tfoot id="stocks-tfoot"></tfoot>
+            </table>
+        </div>
+
+        <div id="stocks-empty" class="empty-state hidden">
+            <p class="empty-icon">📊</p>
+            <p class="empty-text">No holdings yet. Add a ticker to get started.</p>
+            <button class="btn-primary" onclick="openModal('stock')">Add first holding</button>
+        </div>
+    </section>
+
+    <!-- ── Liabilities Tab ───────────────────────────────────────────────────── -->
+    <section id="tab-liabilities" class="tab-section">
+        <div class="section-header">
+            <div>
+                <h2 class="section-title">Liabilities</h2>
+                <p class="section-sub">Debts, loans, and outstanding balances.</p>
+            </div>
+            <button class="btn-primary" onclick="openModal('liability')">+ Add Liability</button>
+        </div>
+        <div id="liability-list" class="cards-grid"></div>
+        <div id="liability-empty" class="empty-state hidden">
+            <p class="empty-icon">📋</p>
+            <p class="empty-text">No liabilities recorded.</p>
+            <button class="btn-primary" onclick="openModal('liability')">Add a liability</button>
+        </div>
+    </section>
+
+</main>
+
+<!-- ── Modal ───────────────────────────────────────────────────────────────── -->
+<div class="modal-overlay hidden" id="modal-overlay" onclick="handleOverlayClick(event)">
+    <div class="modal" id="modal">
+        <button class="modal-close" onclick="closeModal()">×</button>
+        <div id="modal-content"></div>
+    </div>
+</div>
+
+<!-- ── Toast ───────────────────────────────────────────────────────────────── -->
+<div class="toast-container" id="toast-container"></div>
+
+<script src="script.js"></script>
 </body>
 </html>
