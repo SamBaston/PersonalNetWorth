@@ -19,35 +19,108 @@
             <div class="dashboard">
                 <div class="card total-net-worth">
                     <h2>Total Net Worth</h2>
-                    <div class="amount" id="net-worth-amount">$0.00</div>
+                    <div class="amount" id="net-worth-amount">£0.00</div>
                 </div>
                 
                 <div class="details-section">
                     <div class="card assets">
                         <h3>Assets</h3>
-                        <ul id="assets-list" class="item-list">
-                            <li><span class="item-name" style="color: var(--text-secondary)">Loading...</span></li>
-                        </ul>
-                        <div class="total">
+                        
+                        <div class="asset-category">
+                            <div class="category-header">
+                                <h4>Bank Accounts</h4>
+                                <button class="add-btn" onclick="openModal('bank_accounts')">+ Add</button>
+                            </div>
+                            <ul id="bank-accounts-list" class="item-list"></ul>
+                        </div>
+
+                        <div class="asset-category">
+                            <div class="category-header">
+                                <h4>ISAs & LISAs</h4>
+                                <div>
+                                    <button class="add-btn" onclick="openModal('isas')">+ ISA</button>
+                                    <button class="add-btn" onclick="openModal('lisas')">+ LISA</button>
+                                </div>
+                            </div>
+                            <ul id="isas-list" class="item-list"></ul>
+                        </div>
+
+                        <div class="asset-category">
+                            <div class="category-header">
+                                <h4>Stock Portfolios</h4>
+                                <button class="add-btn" onclick="openModal('stock_portfolios')">+ Add</button>
+                            </div>
+                            <ul id="stocks-list" class="item-list"></ul>
+                        </div>
+
+                        <div class="total" style="margin-top:2rem">
                             <span>Total Assets:</span>
-                            <span id="total-assets" class="positive">$0.00</span>
+                            <span id="total-assets" class="positive">£0.00</span>
                         </div>
                     </div>
 
                     <div class="card liabilities">
-                        <h3>Liabilities</h3>
-                        <ul id="liabilities-list" class="item-list">
-                            <li><span class="item-name" style="color: var(--text-secondary)">Loading...</span></li>
-                        </ul>
+                        <div class="category-header">
+                            <h3>Liabilities</h3>
+                            <button class="add-btn" onclick="alert('Debt CRUD coming soon!')" style="margin-bottom:1.5rem">+ Add</button>
+                        </div>
+                        
+                        <div class="asset-category">
+                            <h4>Debts & Loans</h4>
+                            <ul id="liabilities-list" class="item-list"></ul>
+                        </div>
+
                         <div class="total">
                             <span>Total Liabilities:</span>
-                            <span id="total-liabilities" class="negative">$0.00</span>
+                            <span id="total-liabilities" class="negative">£0.00</span>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
     </div>
+
+    <!-- Modal Form -->
+    <div id="assetModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 id="modalTitle">Add Asset</h2>
+            <form id="assetForm">
+                <input type="hidden" id="assetId">
+                <input type="hidden" id="assetCategory">
+                
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="assetName" required>
+                </div>
+                
+                <!-- standard balance -->
+                <div class="form-group" id="balanceGroup">
+                    <label>Total Balance</label>
+                    <input type="number" step="0.01" id="assetBalance">
+                </div>
+                
+                <!-- LISA split balances -->
+                <div class="form-group" id="lisaGroup" style="display:none;">
+                    <label>Base Balance</label>
+                    <input type="number" step="0.01" id="lisaBaseBalance">
+                    <label style="margin-top: 1rem;">Pending Govt Bonus (25%)</label>
+                    <input type="number" step="0.01" id="lisaPendingBonus">
+                </div>
+                
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select id="assetCurrency">
+                        <option value="GBP">GBP (£)</option>
+                        <option value="USD">USD ($)</option>
+                    </select>
+                </div>
+                
+                <button type="submit" class="save-btn">Save Asset</button>
+            </form>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
