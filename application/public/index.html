@@ -14,18 +14,19 @@
             <h1>Net Worth Tracker</h1>
             <p>Your financial snapshot at a glance.</p>
         </header>
-        
+
         <main>
             <div class="dashboard">
                 <div class="card total-net-worth">
                     <h2>Total Net Worth</h2>
                     <div class="amount" id="net-worth-amount">£0.00</div>
                 </div>
-                
+
                 <div class="details-section">
+                    <!-- ── Assets ── -->
                     <div class="card assets">
                         <h3>Assets</h3>
-                        
+
                         <div class="asset-category">
                             <div class="category-header">
                                 <h4>Bank Accounts</h4>
@@ -36,7 +37,7 @@
 
                         <div class="asset-category">
                             <div class="category-header">
-                                <h4>ISAs & LISAs</h4>
+                                <h4>ISAs &amp; LISAs</h4>
                                 <div>
                                     <button class="add-btn" onclick="openModal('isas')">+ ISA</button>
                                     <button class="add-btn" onclick="openModal('lisas')">+ LISA</button>
@@ -59,15 +60,24 @@
                         </div>
                     </div>
 
+                    <!-- ── Liabilities ── -->
                     <div class="card liabilities">
-                        <div class="category-header">
-                            <h3>Liabilities</h3>
-                            <button class="add-btn" onclick="alert('Debt CRUD coming soon!')" style="margin-bottom:1.5rem">+ Add</button>
-                        </div>
-                        
+                        <h3>Liabilities</h3>
+
                         <div class="asset-category">
-                            <h4>Debts & Loans</h4>
-                            <ul id="liabilities-list" class="item-list"></ul>
+                            <div class="category-header">
+                                <h4>Student Loans</h4>
+                                <button class="add-btn" onclick="openLiabilityModal('student_loans')">+ Add</button>
+                            </div>
+                            <ul id="student-loans-list" class="item-list"></ul>
+                        </div>
+
+                        <div class="asset-category">
+                            <div class="category-header">
+                                <h4>Debts &amp; Loans</h4>
+                                <button class="add-btn" onclick="openLiabilityModal('general_debts')">+ Add</button>
+                            </div>
+                            <ul id="general-debts-list" class="item-list"></ul>
                         </div>
 
                         <div class="total">
@@ -80,7 +90,7 @@
         </main>
     </div>
 
-    <!-- Modal Form -->
+    <!-- ── Asset Modal ── -->
     <div id="assetModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -88,26 +98,24 @@
             <form id="assetForm">
                 <input type="hidden" id="assetId">
                 <input type="hidden" id="assetCategory">
-                
+
                 <div class="form-group">
                     <label>Name</label>
                     <input type="text" id="assetName" required>
                 </div>
-                
-                <!-- standard balance -->
+
                 <div class="form-group" id="balanceGroup">
                     <label>Total Balance</label>
                     <input type="number" step="0.01" id="assetBalance">
                 </div>
-                
-                <!-- LISA split balances -->
+
                 <div class="form-group" id="lisaGroup" style="display:none;">
                     <label>Base Balance</label>
                     <input type="number" step="0.01" id="lisaBaseBalance">
-                    <label style="margin-top: 1rem;">Pending Govt Bonus (25%)</label>
+                    <label style="margin-top:1rem;">Pending Govt Bonus (25%)</label>
                     <input type="number" step="0.01" id="lisaPendingBonus">
                 </div>
-                
+
                 <div class="form-group">
                     <label>Currency</label>
                     <select id="assetCurrency">
@@ -115,9 +123,88 @@
                         <option value="USD">USD ($)</option>
                     </select>
                 </div>
-                
+
                 <button type="submit" class="save-btn">Save Asset</button>
             </form>
+        </div>
+    </div>
+
+    <!-- ── Liability Modal ── -->
+    <div id="liabilityModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeLiabilityModal()">&times;</span>
+            <h2 id="liabilityModalTitle">Add Liability</h2>
+            <form id="liabilityForm">
+                <input type="hidden" id="liabilityId">
+                <input type="hidden" id="liabilityCategory">
+
+                <div class="form-group">
+                    <label>Name</label>
+                    <input type="text" id="liabilityName" required>
+                </div>
+
+                <!-- ── Student Loan fields ── -->
+                <div id="studentLoanFields">
+                    <div class="form-group">
+                        <label>Plan Type</label>
+                        <select id="loanPlanType" onchange="onPlanTypeChange()">
+                            <option value="Plan 1">Plan 1</option>
+                            <option value="Plan 2" selected>Plan 2</option>
+                            <option value="Plan 4">Plan 4 (Scotland)</option>
+                            <option value="Postgraduate">Postgraduate</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Interest Rate (% per annum)</label>
+                        <input type="number" step="0.01" min="0" id="loanInterestRate">
+                        <small class="form-hint" id="planRateHint"></small>
+                    </div>
+                </div>
+
+                <!-- ── General Debt fields ── -->
+                <div id="generalDebtFields" style="display:none;">
+                    <div class="form-group">
+                        <label>Debt Type</label>
+                        <select id="debtType">
+                            <option value="credit_card">Credit Card</option>
+                            <option value="personal_loan">Personal Loan</option>
+                            <option value="mortgage">Mortgage</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Interest Rate (APR %)</label>
+                        <input type="number" step="0.01" min="0" id="debtInterestRate">
+                    </div>
+                    <div class="form-group">
+                        <label>Minimum Monthly Payment</label>
+                        <input type="number" step="0.01" min="0" id="debtMinPayment" placeholder="0.00">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Outstanding Balance</label>
+                    <input type="number" step="0.01" min="0" id="liabilityBalance" required>
+                </div>
+
+                <div class="form-group">
+                    <label>Currency</label>
+                    <select id="liabilityCurrency">
+                        <option value="GBP">GBP (£)</option>
+                        <option value="USD">USD ($)</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="save-btn">Save</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── History Modal ── -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeHistoryModal()">&times;</span>
+            <h2 id="historyModalTitle">Balance History</h2>
+            <div id="historyModalBody"></div>
         </div>
     </div>
 

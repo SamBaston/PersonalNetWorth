@@ -87,41 +87,79 @@
         "tickers": [
           {
             "symbol": "AAPL",
-            "quantity": 10
+            "quantity": 10,
+            "current_price": 271.06,
+            "currency": "USD",
+            "value": 2710.6
           },
           {
             "symbol": "MSFT",
-            "quantity": 5
+            "quantity": 5,
+            "current_price": 424.62,
+            "currency": "USD",
+            "value": 2123.1
           }
         ],
-        "currency": "USD"
+        "currency": "USD",
+        "balance": 4833.7
       }
     ]
   },
-  "liabilities": [
-    {
-      "id": "d1",
-      "name": "Credit Card",
-      "balance": 1200,
-      "currency": "GBP",
-      "history": [
-        {
-          "date": "2026-03-01T00:00:00.000Z",
-          "balance": 1200
-        }
-      ]
-    },
-    {
-      "id": "d2",
-      "name": "Car Loan",
-      "balance": 8500,
-      "currency": "GBP",
-      "history": [
-        {
-          "date": "2026-03-01T00:00:00.000Z",
-          "balance": 8500
-        }
-      ]
-    }
-  ]
+  "liabilities": {
+    "student_loans": [
+      {
+        "id": "1777210313446",
+        "name": "Durham",
+        "balance": 99,
+        "currency": "GBP",
+        "plan_type": "Plan 2",
+        "interest_rate": 7.3,
+        "last_updated": "2026-04-26T13:46:34.805Z",
+        "history": [
+          {
+            "date": "2026-04-26T13:31:53.446Z",
+            "balance": 99999
+          },
+          {
+            "date": "2026-04-26T13:46:34.805Z",
+            "balance": 99
+          }
+        ]
+      }
+    ],
+    "general_debts": [
+      {
+        "id": "d1",
+        "name": "Credit Card",
+        "type": "credit_card",
+        "balance": 1246.32,
+        "interest_rate": 24.9,
+        "minimum_payment": 25,
+        "currency": "GBP",
+        "last_updated": "2026-04-26T14:09:55.798Z",
+        "history": [
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "balance": 1200
+          }
+        ]
+      },
+      {
+        "id": "d2",
+        "name": "Car Loan",
+        "type": "personal_loan",
+        "balance": 8590.94,
+        "interest_rate": 6.9,
+        "minimum_payment": 250,
+        "currency": "GBP",
+        "last_updated": "2026-04-26T14:09:55.798Z",
+        "history": [
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "balance": 8500
+          }
+        ]
+      }
+    ]
+  }
 }
