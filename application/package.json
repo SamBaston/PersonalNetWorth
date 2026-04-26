@@ -1,13 +1,16 @@
 {
-  "name": "personal-net-worth",
+  "name": "personal-wealth-tracker",
   "version": "1.0.0",
-  "description": "Personal wealth tracking app",
-  "main": "server/index.js",
+  "private": true,
   "scripts": {
     "start": "node server/index.js",
-    "dev": "node server/index.js"
+    "dev": "node server/index.js",
+    "build": "echo 'No build step required for Express app'"
   },
   "dependencies": {
-    "express": "^4.18.2"
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3"
   }
 }

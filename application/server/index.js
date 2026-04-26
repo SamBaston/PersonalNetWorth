@@ -1,26 +1,28 @@
 const express = require('express');
 const path = require('path');
-const fs = require('fs').promises; // Use async promises built-in module
+const fs = require('fs').promises;
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = 3000; // Hardcoded to 3000 as per environment constraints
 const dataPath = path.join(__dirname, '../data/data.json');
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public')));
 
-// Helper to read data
 async function readData() {
-    const raw = await fs.readFile(dataPath, 'utf8');
-    return JSON.parse(raw);
+    try {
+        const raw = await fs.readFile(dataPath, 'utf8');
+        return JSON.parse(raw);
+    } catch (err) {
+        console.error('Error reading data:', err);
+        return { assets: {}, liabilities: [] };
+    }
 }
 
-// Helper to write data
 async function writeData(data) {
     await fs.writeFile(dataPath, JSON.stringify(data, null, 2), 'utf8');
 }
 
-// Function to fetch real-time stock prices
 async function enrichWithStockPrices(data) {
     if (!data.assets || !data.assets.stock_portfolios) return data;
     
@@ -31,25 +33,27 @@ async function enrichWithStockPrices(data) {
                 try {
                     const response = await fetch(`https://query2.finance.yahoo.com/v8/finance/chart/${ticker.symbol}`, {
                         headers: {
-                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            'User-Agent': 'Mozilla/5.0'
                         }
                     });
                     
                     if (!response.ok) throw new Error(`HTTP error ${response.status}`);
                     const json = await response.json();
                     
-                    const meta = json.chart.result[0].meta;
-                    const price = meta.regularMarketPrice;
-                    ticker.current_price = price;
-                    ticker.currency = meta.currency;
-                    
-                    const value = price * ticker.quantity;
-                    ticker.value = value;
-                    totalValue += value;
+                    if (json.chart && json.chart.result && json.chart.result[0]) {
+                        const meta = json.chart.result[0].meta;
+                        const price = meta.regularMarketPrice;
+                        ticker.current_price = price;
+                        ticker.currency = meta.currency;
+                        
+                        const value = price * ticker.quantity;
+                        ticker.value = value;
+                        totalValue += value;
+                    }
                 } catch (err) {
                     console.error(`Failed to fetch price for ${ticker.symbol}:`, err.message);
-                    ticker.current_price = 0;
-                    ticker.value = 0;
+                    ticker.current_price = ticker.current_price || 0;
+                    ticker.value = ticker.value || 0;
                 }
             }
             portfolio.balance = totalValue;
@@ -58,11 +62,9 @@ async function enrichWithStockPrices(data) {
     return data;
 }
 
-// GET all wealth data
 app.get('/api/wealth', async (req, res) => {
     try {
         let parsedData = await readData();
-        // Enrich the data with external stock prices
         parsedData = await enrichWithStockPrices(parsedData);
         res.json(parsedData);
     } catch (err) {
@@ -71,7 +73,7 @@ app.get('/api/wealth', async (req, res) => {
     }
 });
 
-// CREATE asset
+// Assets CRUD
 app.post('/api/assets/:category', async (req, res) => {
     try {
         const { category } = req.params;
@@ -81,19 +83,17 @@ app.post('/api/assets/:category', async (req, res) => {
         const newAsset = {
             id: Date.now().toString(),
             ...req.body,
-            history: [{ date: new Date().toISOString(), ...req.body }] // Track initial state
+            history: [{ date: new Date().toISOString(), ...req.body }]
         };
         
         data.assets[category].push(newAsset);
         await writeData(data);
         res.json({ success: true, asset: newAsset });
     } catch (err) {
-        console.error('Save error:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// UPDATE asset
 app.put('/api/assets/:category/:id', async (req, res) => {
     try {
         const { category, id } = req.params;
@@ -105,9 +105,8 @@ app.put('/api/assets/:category/:id', async (req, res) => {
         if (index === -1) return res.status(404).json({ error: 'Asset not found' });
         
         const updatedAsset = { ...list[index], ...req.body };
-        
-        // Track the historical value over time when an edit occurs
         if (!updatedAsset.history) updatedAsset.history = [];
+        
         const historySnapshot = { date: new Date().toISOString() };
         if (category === 'lisas') {
             historySnapshot.base_balance = updatedAsset.base_balance;
@@ -121,12 +120,10 @@ app.put('/api/assets/:category/:id', async (req, res) => {
         await writeData(data);
         res.json({ success: true, asset: updatedAsset });
     } catch (err) {
-        console.error('Update error:', err);
         res.status(500).json({ error: err.message });
     }
 });
 
-// DELETE asset
 app.delete('/api/assets/:category/:id', async (req, res) => {
     try {
         const { category, id } = req.params;
@@ -137,11 +134,65 @@ app.delete('/api/assets/:category/:id', async (req, res) => {
         await writeData(data);
         res.json({ success: true });
     } catch (err) {
-        console.error('Delete error:', err);
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Liabilities CRUD
+app.post('/api/liabilities', async (req, res) => {
+    try {
+        const data = await readData();
+        if (!data.liabilities) data.liabilities = [];
+        
+        const newLiability = {
+            id: Date.now().toString(),
+            ...req.body,
+            history: [{ date: new Date().toISOString(), balance: req.body.balance }]
+        };
+        
+        data.liabilities.push(newLiability);
+        await writeData(data);
+        res.json({ success: true, liability: newLiability });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.put('/api/liabilities/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const data = await readData();
+        const index = data.liabilities.findIndex(l => l.id === id);
+        if (index === -1) return res.status(404).json({ error: 'Liability not found' });
+        
+        const updatedLiability = { ...data.liabilities[index], ...req.body };
+        if (!updatedLiability.history) updatedLiability.history = [];
+        
+        updatedLiability.history.push({
+            date: new Date().toISOString(),
+            balance: updatedLiability.balance
+        });
+        
+        data.liabilities[index] = updatedLiability;
+        await writeData(data);
+        res.json({ success: true, liability: updatedLiability });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.delete('/api/liabilities/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const data = await readData();
+        data.liabilities = data.liabilities.filter(l => l.id !== id);
+        await writeData(data);
+        res.json({ success: true });
+    } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
 app.listen(PORT, () => {
-    console.log(`Server is running! Access the app at http://localhost:${PORT}`);
+    console.log(`Server is running on http://localhost:${PORT}`);
 });

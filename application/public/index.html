@@ -11,17 +11,18 @@
 <body>
     <div class="container">
         <header>
-            <h1>Net Worth Tracker</h1>
-            <p>Your financial snapshot at a glance.</p>
+            <div class="title-group">
+                <h1>Net Worth Tracker</h1>
+                <p>Comprehensive Financial Monitoring & Debt Management</p>
+            </div>
+            <div class="net-worth-summary">
+                <div class="label">Current Net Worth</div>
+                <div class="amount" id="net-worth-amount">£0.00</div>
+            </div>
         </header>
         
         <main>
             <div class="dashboard">
-                <div class="card total-net-worth">
-                    <h2>Total Net Worth</h2>
-                    <div class="amount" id="net-worth-amount">£0.00</div>
-                </div>
-                
                 <div class="details-section">
                     <div class="card assets">
                         <h3>Assets</h3>
@@ -54,53 +55,89 @@
                         </div>
 
                         <div class="total" style="margin-top:2rem">
-                            <span>Total Assets:</span>
-                            <span id="total-assets" class="positive">£0.00</span>
+                            <span>Total Assets</span>
+                            <span id="total-assets" class="value positive">£0.00</span>
                         </div>
                     </div>
 
                     <div class="card liabilities">
                         <div class="category-header">
-                            <h3>Liabilities</h3>
-                            <button class="add-btn" onclick="alert('Debt CRUD coming soon!')" style="margin-bottom:1.5rem">+ Add</button>
+                            <h3>Liabilities & Debt Tracking</h3>
+                            <button class="add-btn" onclick="openModal('liabilities')">+ Add Item</button>
                         </div>
                         
                         <div class="asset-category">
-                            <h4>Debts & Loans</h4>
+                            <h4>Active Debts & Loans</h4>
                             <ul id="liabilities-list" class="item-list"></ul>
                         </div>
 
                         <div class="total">
-                            <span>Total Liabilities:</span>
-                            <span id="total-liabilities" class="negative">£0.00</span>
+                            <span>Aggregate Liability Load</span>
+                            <span id="total-liabilities" class="value negative">£0.00</span>
                         </div>
                     </div>
                 </div>
             </div>
         </main>
+
+        <footer>
+            <span>Comprehensive Wealth Management</span>
+            <span id="last-updated">Data strictly encrypted</span>
+        </footer>
     </div>
 
     <!-- Modal Form -->
     <div id="assetModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle">Add Asset</h2>
+            <h2 id="modalTitle">Add Item</h2>
             <form id="assetForm">
                 <input type="hidden" id="assetId">
                 <input type="hidden" id="assetCategory">
                 
                 <div class="form-group">
                     <label>Name</label>
-                    <input type="text" id="assetName" required>
+                    <input type="text" id="assetName" required placeholder="e.g. Barclays Current, Student Loan">
                 </div>
                 
-                <!-- standard balance -->
+                <div id="debtFields" style="display:none;">
+                    <div class="form-group">
+                        <label>Debt Type</label>
+                        <select id="debtType" onchange="toggleDebtDetails()">
+                            <option value="credit_card">Credit Card</option>
+                            <option value="mortgage">Mortgage</option>
+                            <option value="personal_loan">Personal Loan</option>
+                            <option value="student_loan">Student Loan</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" id="studentLoanPlanGroup" style="display:none;">
+                        <label>Student Loan Plan (UK)</label>
+                        <select id="studentLoanPlan">
+                            <option value="plan_1">Plan 1 (Pre-2012)</option>
+                            <option value="plan_2">Plan 2 (2012-2023)</option>
+                            <option value="plan_4">Plan 4 (Scotland)</option>
+                            <option value="plan_5">Plan 5 (Post-2023)</option>
+                            <option value="postgrad">Postgraduate</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label>Interest Rate (APR %)</label>
+                        <input type="number" step="0.01" id="interestRate" placeholder="e.g. 5.9">
+                    </div>
+
+                    <div class="form-group">
+                        <label>Minimum Monthly Payment</label>
+                        <input type="number" step="0.01" id="minPayment" placeholder="e.g. 25.00">
+                    </div>
+                </div>
+
                 <div class="form-group" id="balanceGroup">
-                    <label>Total Balance</label>
+                    <label id="balanceLabel">Total Balance</label>
                     <input type="number" step="0.01" id="assetBalance">
                 </div>
                 
-                <!-- LISA split balances -->
                 <div class="form-group" id="lisaGroup" style="display:none;">
                     <label>Base Balance</label>
                     <input type="number" step="0.01" id="lisaBaseBalance">
@@ -116,7 +153,7 @@
                     </select>
                 </div>
                 
-                <button type="submit" class="save-btn">Save Asset</button>
+                <button type="submit" class="save-btn">Save Item</button>
             </form>
         </div>
     </div>

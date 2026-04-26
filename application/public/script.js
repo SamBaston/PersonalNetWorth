@@ -15,6 +15,10 @@ async function fetchWealthData() {
         if (!response.ok) throw new Error('Network response was not ok');
         const data = await response.json();
         updateDashboard(data);
+        
+        // Update footer sync time
+        const now = new Date();
+        document.getElementById('last-updated').textContent = `Last synced: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
     } catch (error) {
         console.error('Error fetching wealth data:', error);
         document.getElementById('net-worth-amount').textContent = 'Error';
@@ -42,43 +46,37 @@ function updateDashboard(data) {
         return amount;
     }
     
-    // Parse Bank Accounts
-    if (data.assets.bank_accounts && data.assets.bank_accounts.length > 0) {
+    // Assets
+    if (data.assets.bank_accounts) {
         data.assets.bank_accounts.forEach((acc, i) => {
             totalAssets += getGBPValue(acc.balance, acc.currency);
-            bankList.appendChild(createListItem(`${acc.name}`, acc.balance, acc.currency, i, false, 'bank_accounts', acc));
+            bankList.appendChild(createListItem(acc.name, acc.balance, acc.currency, i, false, 'bank_accounts', acc));
         });
     }
 
-    // Parse ISAs & LISAs
     let isaIndex = 0;
-    if (data.assets.isas && data.assets.isas.length > 0) {
+    if (data.assets.isas) {
         data.assets.isas.forEach(isa => {
             totalAssets += getGBPValue(isa.balance, isa.currency);
             isasList.appendChild(createListItem(isa.name, isa.balance, isa.currency, isaIndex++, false, 'isas', isa));
         });
     }
-    if (data.assets.lisas && data.assets.lisas.length > 0) {
+    if (data.assets.lisas) {
         data.assets.lisas.forEach(lisa => {
             const baseBalance = lisa.base_balance + (lisa.realized_bonus || 0);
             const pendingBonus = lisa.pending_bonus || 0;
             const totalLisa = baseBalance + pendingBonus;
             totalAssets += getGBPValue(totalLisa, lisa.currency);
-            
-            // Show base LISA logic
             isasList.appendChild(createListItem(lisa.name, baseBalance, lisa.currency, isaIndex++, false, 'lisas', lisa));
-            // Show bonus logic as nested
             isasList.appendChild(createListItem(`↳ Govt Bonus (25%)`, pendingBonus, lisa.currency, isaIndex++, true));
         });
     }
 
-    // Parse Stocks
     let stockIndex = 0;
-    if (data.assets.stock_portfolios && data.assets.stock_portfolios.length > 0) {
+    if (data.assets.stock_portfolios) {
         data.assets.stock_portfolios.forEach(port => {
             totalAssets += getGBPValue(port.balance, port.currency || 'GBP');
             stocksList.appendChild(createListItem(port.name, port.balance, port.currency || 'GBP', stockIndex++, false, 'stock_portfolios', port));
-            
             if (port.type === 'tickers' && port.tickers) {
                 port.tickers.forEach(ticker => {
                     stocksList.appendChild(createListItem(`↳ ${ticker.quantity}x ${ticker.symbol}`, ticker.value, ticker.currency, stockIndex++, true));
@@ -87,31 +85,35 @@ function updateDashboard(data) {
         });
     }
 
-    // Parse Liabilities
-    if (data.liabilities && data.liabilities.length > 0) {
+    // Liabilities
+    if (data.liabilities) {
         data.liabilities.forEach((liability, i) => {
-            const val = liability.balance || liability.value; 
-            totalLiabilities += getGBPValue(val, liability.currency);
-            liabilitiesList.appendChild(createListItem(liability.name, val, liability.currency, i, false, 'liabilities', liability));
+            totalLiabilities += getGBPValue(liability.balance, liability.currency);
+            
+            // Calculate interest accrual monthly estimate
+            const monthlyInterest = (liability.balance * ((liability.interest_rate || 0) / 100)) / 12;
+            const meta = [
+                liability.type ? liability.type.replace('_', ' ').toUpperCase() : 'DEBT',
+                liability.interest_rate ? `${liability.interest_rate}% APR (Est. £${monthlyInterest.toFixed(2)}/mo interest)` : null,
+                liability.plan_type ? `PLAN: ${liability.plan_type.toUpperCase()}` : null,
+                liability.min_payment ? `Min Pay: £${liability.min_payment}` : null
+            ].filter(Boolean).join(' • ');
+
+            liabilitiesList.appendChild(createListItem(liability.name, liability.balance, liability.currency, i, false, 'liabilities', liability, meta));
         });
     }
 
     const netWorth = totalAssets - totalLiabilities;
-
     document.getElementById('total-assets').textContent = formatCurrency(totalAssets, 'GBP');
     document.getElementById('total-liabilities').textContent = formatCurrency(totalLiabilities, 'GBP');
-    
     const netWorthElement = document.getElementById('net-worth-amount');
     netWorthElement.textContent = formatCurrency(netWorth, 'GBP');
     
-    if (netWorth > 0) {
-        netWorthElement.style.color = 'var(--positive)';
-    } else if (netWorth < 0) {
-        netWorthElement.style.color = 'var(--negative)';
-    }
+    if (netWorth > 0) netWorthElement.style.color = 'var(--positive)';
+    else if (netWorth < 0) netWorthElement.style.color = 'var(--negative)';
 }
 
-function createListItem(name, value, currency, index, isSubitem = false, category = null, fullAsset = null) {
+function createListItem(name, value, currency, index, isSubitem = false, category = null, item = null, meta = null) {
     const li = document.createElement('li');
     li.style.animationDelay = `${index * 0.05}s`;
     
@@ -122,14 +124,12 @@ function createListItem(name, value, currency, index, isSubitem = false, categor
         li.style.paddingLeft = '1.5rem';
         li.style.fontSize = '0.9em';
         li.style.borderBottom = 'none';
-        li.style.paddingTop = '0.2rem';
-        li.style.paddingBottom = '0.2rem';
         
-        const nameSpanObj = document.createElement('span');
-        nameSpanObj.className = 'item-name';
-        nameSpanObj.style.color = 'var(--text-tertiary)';
-        nameSpanObj.textContent = name;
-        mainDiv.appendChild(nameSpanObj);
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'item-name';
+        nameSpan.style.color = 'var(--text-tertiary)';
+        nameSpan.textContent = name;
+        mainDiv.appendChild(nameSpan);
         
         const valueSpan = document.createElement('span');
         valueSpan.className = 'item-value';
@@ -137,7 +137,6 @@ function createListItem(name, value, currency, index, isSubitem = false, categor
         valueSpan.textContent = formatCurrency(value, currency);
         mainDiv.appendChild(valueSpan);
         li.appendChild(mainDiv);
-        
         return li;
     } 
 
@@ -150,34 +149,35 @@ function createListItem(name, value, currency, index, isSubitem = false, categor
     valueSpan.className = 'item-value';
     valueSpan.textContent = formatCurrency(value, currency);
     mainDiv.appendChild(valueSpan);
-    
     li.appendChild(mainDiv);
 
-    // Hover UI for editing and deleting
-    if (fullAsset && category !== 'liabilities') { // (we skipped liable crud for now)
+    if (meta) {
+        const metaDiv = document.createElement('div');
+        metaDiv.className = 'item-meta';
+        metaDiv.textContent = meta;
+        li.appendChild(metaDiv);
+    }
+
+    if (item && category) {
         const actionsDiv = document.createElement('div');
         actionsDiv.className = 'item-actions';
 
-        const viewHistoryBtn = document.createElement('button');
-        viewHistoryBtn.className = 'action-btn';
-        viewHistoryBtn.innerHTML = '📈';
-        viewHistoryBtn.title = 'View historical value points';
-        viewHistoryBtn.onclick = () => {
-            const historyData = JSON.stringify(fullAsset.history, null, 2);
-            alert(`History saved in backend (Dashboards coming later!):\n\n${historyData}`);
-        };
+        const historyBtn = document.createElement('button');
+        historyBtn.className = 'action-btn';
+        historyBtn.innerHTML = '📈';
+        historyBtn.onclick = () => alert(`History Log:\n${JSON.stringify(item.history, null, 2)}`);
 
         const editBtn = document.createElement('button');
         editBtn.className = 'action-btn';
         editBtn.innerHTML = '✏️';
-        editBtn.onclick = () => openModal(category, fullAsset);
+        editBtn.onclick = () => openModal(category, item);
 
         const delBtn = document.createElement('button');
         delBtn.className = 'action-btn';
         delBtn.innerHTML = '🗑️';
-        delBtn.onclick = () => deleteAsset(category, fullAsset.id);
+        delBtn.onclick = () => deleteItem(category, item.id);
 
-        actionsDiv.appendChild(viewHistoryBtn);
+        actionsDiv.appendChild(historyBtn);
         actionsDiv.appendChild(editBtn);
         actionsDiv.appendChild(delBtn);
         li.appendChild(actionsDiv);
@@ -187,54 +187,59 @@ function createListItem(name, value, currency, index, isSubitem = false, categor
 }
 
 function formatCurrency(amount, currencyCode = 'GBP') {
-    return new Intl.NumberFormat('en-GB', {
-        style: 'currency',
-        currency: currencyCode || 'GBP'
-    }).format(amount);
+    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: currencyCode }).format(amount);
 }
 
-// ---- CRUD Logic ----
-
-function openModal(category, asset = null) {
+function openModal(category, item = null) {
     const modal = document.getElementById('assetModal');
     const form = document.getElementById('assetForm');
     modal.style.display = 'flex';
     document.getElementById('assetCategory').value = category;
     
-    // Toggle LISA specific inputs
     const lisaGroup = document.getElementById('lisaGroup');
     const balanceGroup = document.getElementById('balanceGroup');
+    const debtFields = document.getElementById('debtFields');
     
-    if (category === 'lisas') {
-        lisaGroup.style.display = 'block';
-        balanceGroup.style.display = 'none';
-        document.getElementById('lisaBaseBalance').required = true;
-        document.getElementById('assetBalance').required = false;
-    } else {
-        lisaGroup.style.display = 'none';
-        balanceGroup.style.display = 'block';
-        document.getElementById('assetBalance').required = true;
-        document.getElementById('lisaBaseBalance').required = false;
-    }
+    lisaGroup.style.display = category === 'lisas' ? 'block' : 'none';
+    balanceGroup.style.display = category === 'lisas' ? 'none' : 'block';
+    debtFields.style.display = category === 'liabilities' ? 'block' : 'none';
 
-    if (asset) {
-        document.getElementById('modalTitle').textContent = 'Edit Asset';
-        document.getElementById('assetId').value = asset.id;
-        document.getElementById('assetName').value = asset.name || '';
-        document.getElementById('assetCurrency').value = asset.currency || 'GBP';
+    if (item) {
+        document.getElementById('modalTitle').textContent = 'Edit Item';
+        document.getElementById('assetId').value = item.id;
+        document.getElementById('assetName').value = item.name || '';
+        document.getElementById('assetCurrency').value = item.currency || 'GBP';
         
         if (category === 'lisas') {
-            document.getElementById('lisaBaseBalance').value = asset.base_balance || 0;
-            document.getElementById('lisaPendingBonus').value = asset.pending_bonus || 0;
+            document.getElementById('lisaBaseBalance').value = item.base_balance || 0;
+            document.getElementById('lisaPendingBonus').value = item.pending_bonus || 0;
         } else {
-            document.getElementById('assetBalance').value = asset.balance || 0;
+            document.getElementById('assetBalance').value = item.balance || 0;
+        }
+
+        if (category === 'liabilities') {
+            document.getElementById('debtType').value = item.type || 'credit_card';
+            document.getElementById('interestRate').value = item.interest_rate || '';
+            document.getElementById('minPayment').value = item.min_payment || '';
+            document.getElementById('studentLoanPlan').value = item.plan_type || 'plan_2';
+            toggleDebtDetails();
         }
     } else {
-        document.getElementById('modalTitle').textContent = 'Add Asset';
+        document.getElementById('modalTitle').textContent = 'Add Item';
         document.getElementById('assetId').value = '';
         form.reset();
         document.getElementById('assetCategory').value = category;
+        toggleDebtDetails();
     }
+}
+
+function toggleDebtDetails() {
+    const debtType = document.getElementById('debtType').value;
+    const planGroup = document.getElementById('studentLoanPlanGroup');
+    const balanceLabel = document.getElementById('balanceLabel');
+    
+    planGroup.style.display = debtType === 'student_loan' ? 'block' : 'none';
+    balanceLabel.textContent = debtType === 'student_loan' ? 'Outstanding Principal' : 'Total Balance';
 }
 
 function closeModal() {
@@ -254,17 +259,22 @@ document.getElementById('assetForm').addEventListener('submit', async (e) => {
     if (category === 'lisas') {
         payload.base_balance = parseFloat(document.getElementById('lisaBaseBalance').value);
         payload.pending_bonus = parseFloat(document.getElementById('lisaPendingBonus').value) || 0;
-        payload.type = 'Cash';
-    } else if (category === 'stock_portfolios') {
-        payload.balance = parseFloat(document.getElementById('assetBalance').value);
-        payload.type = 'manual'; // Simplified CRUD for MVP
     } else {
         payload.balance = parseFloat(document.getElementById('assetBalance').value);
-        payload.type = 'Custom';
+    }
+
+    if (category === 'liabilities') {
+        payload.type = document.getElementById('debtType').value;
+        payload.interest_rate = parseFloat(document.getElementById('interestRate').value) || 0;
+        payload.min_payment = parseFloat(document.getElementById('minPayment').value) || 0;
+        if (payload.type === 'student_loan') {
+            payload.plan_type = document.getElementById('studentLoanPlan').value;
+        }
     }
 
     const method = id ? 'PUT' : 'POST';
-    const url = id ? `/api/assets/${category}/${id}` : `/api/assets/${category}`;
+    const baseUrl = category === 'liabilities' ? '/api/liabilities' : `/api/assets/${category}`;
+    const url = id ? `${baseUrl}/${id}` : baseUrl;
 
     try {
         const res = await fetch(url, {
@@ -274,19 +284,20 @@ document.getElementById('assetForm').addEventListener('submit', async (e) => {
         });
         if (res.ok) {
             closeModal();
-            fetchWealthData(); // Reload UI
+            fetchWealthData();
         } else {
-            alert('Failed to save asset. Backend error.');
+            alert('Error saving item');
         }
     } catch (err) {
         console.error('Save error:', err);
     }
 });
 
-async function deleteAsset(category, id) {
-    if (!confirm('Are you sure you want to permanently delete this asset?')) return;
+async function deleteItem(category, id) {
+    if (!confirm('Confirm delete?')) return;
+    const baseUrl = category === 'liabilities' ? '/api/liabilities' : `/api/assets/${category}`;
     try {
-        const res = await fetch(`/api/assets/${category}/${id}`, { method: 'DELETE' });
+        const res = await fetch(`${baseUrl}/${id}`, { method: 'DELETE' });
         if (res.ok) fetchWealthData();
     } catch (err) {
         console.error('Delete error:', err);
