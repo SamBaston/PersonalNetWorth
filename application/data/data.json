@@ -87,41 +87,89 @@
         "tickers": [
           {
             "symbol": "AAPL",
-            "quantity": 10
+            "quantity": 10,
+            "current_price": 273.43,
+            "currency": "USD",
+            "value": 2734.3
           },
           {
             "symbol": "MSFT",
-            "quantity": 5
+            "quantity": 5,
+            "current_price": 415.75,
+            "currency": "USD",
+            "value": 2078.75
           }
         ],
-        "currency": "USD"
+        "currency": "USD",
+        "balance": 4813.05
       }
     ]
   },
-  "liabilities": [
-    {
-      "id": "d1",
-      "name": "Credit Card",
-      "balance": 1200,
-      "currency": "GBP",
-      "history": [
-        {
-          "date": "2026-03-01T00:00:00.000Z",
-          "balance": 1200
-        }
-      ]
-    },
-    {
-      "id": "d2",
-      "name": "Car Loan",
-      "balance": 8500,
-      "currency": "GBP",
-      "history": [
-        {
-          "date": "2026-03-01T00:00:00.000Z",
-          "balance": 8500
-        }
-      ]
-    }
-  ]
+  "liabilities": {
+    "student_loans": [
+      {
+        "id": "sl1",
+        "name": "Student Loan",
+        "plan_type": "plan2",
+        "balance": 38416.4,
+        "currency": "GBP",
+        "annual_interest_rate": 7.3,
+        "last_accrual_date": "2026-04-24T11:54:53.338Z",
+        "notes": "Plan 2 — repay 9% above £27,295/yr threshold",
+        "history": [
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "balance": 38000,
+            "accrued_interest": 0
+          }
+        ],
+        "accrued_since_last_update": 416.4
+      }
+    ],
+    "credit_cards": [
+      {
+        "id": "cc1",
+        "name": "Barclaycard",
+        "balance": 1241.73,
+        "currency": "GBP",
+        "annual_interest_rate": 22.9,
+        "minimum_monthly_payment": 30,
+        "credit_limit": 3000,
+        "last_accrual_date": "2026-04-24T11:54:53.338Z",
+        "notes": "",
+        "history": [
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "balance": 1200,
+            "accrued_interest": 0
+          }
+        ],
+        "accrued_since_last_update": 41.73
+      }
+    ],
+    "personal_loans": [
+      {
+        "id": "pl1",
+        "name": "Car Loan",
+        "balance": 8588.01,
+        "currency": "GBP",
+        "annual_interest_rate": 6.9,
+        "minimum_monthly_payment": 220,
+        "original_amount": 10000,
+        "term_months": 48,
+        "start_date": "2024-06-01T00:00:00.000Z",
+        "last_accrual_date": "2026-04-24T11:54:53.338Z",
+        "notes": "",
+        "history": [
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "balance": 8500,
+            "accrued_interest": 0
+          }
+        ],
+        "accrued_since_last_update": 88.01
+      }
+    ],
+    "mortgages": []
+  }
 }

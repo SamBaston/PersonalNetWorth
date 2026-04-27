@@ -23,23 +23,24 @@
                 </div>
                 
                 <div class="details-section">
+                    <!-- ── Assets ── -->
                     <div class="card assets">
                         <h3>Assets</h3>
                         
                         <div class="asset-category">
                             <div class="category-header">
                                 <h4>Bank Accounts</h4>
-                                <button class="add-btn" onclick="openModal('bank_accounts')">+ Add</button>
+                                <button class="add-btn" id="add-bank-btn" onclick="openModal('bank_accounts')">+ Add</button>
                             </div>
                             <ul id="bank-accounts-list" class="item-list"></ul>
                         </div>
 
                         <div class="asset-category">
                             <div class="category-header">
-                                <h4>ISAs & LISAs</h4>
+                                <h4>ISAs &amp; LISAs</h4>
                                 <div>
-                                    <button class="add-btn" onclick="openModal('isas')">+ ISA</button>
-                                    <button class="add-btn" onclick="openModal('lisas')">+ LISA</button>
+                                    <button class="add-btn" id="add-isa-btn" onclick="openModal('isas')">+ ISA</button>
+                                    <button class="add-btn" id="add-lisa-btn" onclick="openModal('lisas')">+ LISA</button>
                                 </div>
                             </div>
                             <ul id="isas-list" class="item-list"></ul>
@@ -48,7 +49,7 @@
                         <div class="asset-category">
                             <div class="category-header">
                                 <h4>Stock Portfolios</h4>
-                                <button class="add-btn" onclick="openModal('stock_portfolios')">+ Add</button>
+                                <button class="add-btn" id="add-stock-btn" onclick="openModal('stock_portfolios')">+ Add</button>
                             </div>
                             <ul id="stocks-list" class="item-list"></ul>
                         </div>
@@ -59,15 +60,44 @@
                         </div>
                     </div>
 
+                    <!-- ── Liabilities ── -->
                     <div class="card liabilities">
-                        <div class="category-header">
+                        <div class="liabilities-header">
                             <h3>Liabilities</h3>
-                            <button class="add-btn" onclick="alert('Debt CRUD coming soon!')" style="margin-bottom:1.5rem">+ Add</button>
+                            <div class="debt-add-buttons">
+                                <button class="add-btn add-btn-debt" id="add-student-loan-btn" onclick="openDebtModal('student_loans')">+ Student Loan</button>
+                                <button class="add-btn add-btn-debt" id="add-credit-card-btn" onclick="openDebtModal('credit_cards')">+ Credit Card</button>
+                                <button class="add-btn add-btn-debt" id="add-loan-btn" onclick="openDebtModal('personal_loans')">+ Personal Loan</button>
+                                <button class="add-btn add-btn-debt" id="add-mortgage-btn" onclick="openDebtModal('mortgages')">+ Mortgage</button>
+                            </div>
                         </div>
                         
-                        <div class="asset-category">
-                            <h4>Debts & Loans</h4>
-                            <ul id="liabilities-list" class="item-list"></ul>
+                        <div class="asset-category" id="student-loans-section">
+                            <div class="category-header">
+                                <h4>🎓 Student Loans</h4>
+                            </div>
+                            <ul id="student-loans-list" class="item-list"></ul>
+                        </div>
+
+                        <div class="asset-category" id="credit-cards-section">
+                            <div class="category-header">
+                                <h4>💳 Credit Cards</h4>
+                            </div>
+                            <ul id="credit-cards-list" class="item-list"></ul>
+                        </div>
+
+                        <div class="asset-category" id="personal-loans-section">
+                            <div class="category-header">
+                                <h4>🏦 Personal Loans</h4>
+                            </div>
+                            <ul id="personal-loans-list" class="item-list"></ul>
+                        </div>
+
+                        <div class="asset-category" id="mortgages-section">
+                            <div class="category-header">
+                                <h4>🏠 Mortgages</h4>
+                            </div>
+                            <ul id="mortgages-list" class="item-list"></ul>
                         </div>
 
                         <div class="total">
@@ -80,7 +110,7 @@
         </main>
     </div>
 
-    <!-- Modal Form -->
+    <!-- ── Asset Modal ── -->
     <div id="assetModal" class="modal">
         <div class="modal-content">
             <span class="close-btn" onclick="closeModal()">&times;</span>
@@ -97,15 +127,15 @@
                 <!-- standard balance -->
                 <div class="form-group" id="balanceGroup">
                     <label>Total Balance</label>
-                    <input type="number" step="0.01" id="assetBalance">
+                    <input type="number" step="0.01" min="0" id="assetBalance">
                 </div>
                 
                 <!-- LISA split balances -->
                 <div class="form-group" id="lisaGroup" style="display:none;">
                     <label>Base Balance</label>
-                    <input type="number" step="0.01" id="lisaBaseBalance">
+                    <input type="number" step="0.01" min="0" id="lisaBaseBalance">
                     <label style="margin-top: 1rem;">Pending Govt Bonus (25%)</label>
-                    <input type="number" step="0.01" id="lisaPendingBonus">
+                    <input type="number" step="0.01" min="0" id="lisaPendingBonus">
                 </div>
                 
                 <div class="form-group">
@@ -118,6 +148,162 @@
                 
                 <button type="submit" class="save-btn">Save Asset</button>
             </form>
+        </div>
+    </div>
+
+    <!-- ── Debt Modal ── -->
+    <div id="debtModal" class="modal">
+        <div class="modal-content modal-content--wide">
+            <span class="close-btn" onclick="closeDebtModal()">&times;</span>
+            <h2 id="debtModalTitle">Add Debt</h2>
+
+            <!-- Validation error banner -->
+            <div id="debtErrors" class="error-banner" style="display:none;"></div>
+
+            <form id="debtForm">
+                <input type="hidden" id="debtId">
+                <input type="hidden" id="debtCategory">
+
+                <!-- ─ Common fields ─ -->
+                <div class="form-group">
+                    <label for="debtName">Name / Label</label>
+                    <input type="text" id="debtName" placeholder="e.g. Barclaycard, Student Loan…" required>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="debtBalance">Current Balance (£)</label>
+                        <input type="number" step="0.01" min="0" id="debtBalance" placeholder="0.00" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="debtRate">Annual Interest Rate (%)</label>
+                        <input type="number" step="0.01" min="0" max="100" id="debtRate" placeholder="e.g. 7.3">
+                    </div>
+                </div>
+
+                <!-- ─ Student loan fields ─ -->
+                <div id="studentLoanFields" style="display:none;">
+                    <div class="form-group">
+                        <label for="studentPlanType">Loan Plan</label>
+                        <select id="studentPlanType">
+                            <option value="plan1">Plan 1 — pre-2012 (England/Wales)</option>
+                            <option value="plan2" selected>Plan 2 — post-2012 (England/Wales)</option>
+                            <option value="plan4">Plan 4 — Scotland</option>
+                            <option value="plan5">Plan 5 — from 2023/24</option>
+                            <option value="postgrad">Postgraduate Loan</option>
+                        </select>
+                    </div>
+                    <div class="info-box" id="planInfoBox"></div>
+                </div>
+
+                <!-- ─ Credit card fields ─ -->
+                <div id="creditCardFields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="creditLimit">Credit Limit (£)</label>
+                            <input type="number" step="0.01" min="0" id="creditLimit" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="ccMinPayment">Minimum Monthly Payment (£)</label>
+                            <input type="number" step="0.01" min="0" id="ccMinPayment" placeholder="0.00">
+                        </div>
+                    </div>
+                    <!-- Utilisation bar -->
+                    <div class="utilisation-wrapper" id="utilisationWrapper" style="display:none;">
+                        <div class="utilisation-label">
+                            <span>Credit Utilisation</span>
+                            <span id="utilisationPct">0%</span>
+                        </div>
+                        <div class="utilisation-bar-track">
+                            <div class="utilisation-bar-fill" id="utilisationFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─ Personal loan fields ─ -->
+                <div id="personalLoanFields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="loanMinPayment">Minimum Monthly Payment (£)</label>
+                            <input type="number" step="0.01" min="0" id="loanMinPayment" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="loanOriginalAmount">Original Loan Amount (£)</label>
+                            <input type="number" step="0.01" min="0" id="loanOriginalAmount" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="loanTermMonths">Loan Term (months)</label>
+                            <input type="number" step="1" min="1" id="loanTermMonths" placeholder="e.g. 48">
+                        </div>
+                        <div class="form-group">
+                            <label for="loanStartDate">Start Date</label>
+                            <input type="date" id="loanStartDate">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─ Mortgage fields ─ -->
+                <div id="mortgageFields" style="display:none;">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mortgageMinPayment">Monthly Payment (£)</label>
+                            <input type="number" step="0.01" min="0" id="mortgageMinPayment" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label for="mortgagePropertyValue">Property Value (£)</label>
+                            <input type="number" step="0.01" min="0" id="mortgagePropertyValue" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="mortgageTermMonths">Remaining Term (months)</label>
+                            <input type="number" step="1" min="1" id="mortgageTermMonths" placeholder="e.g. 240">
+                        </div>
+                        <div class="form-group">
+                            <label for="mortgageMortgageType">Mortgage Type</label>
+                            <select id="mortgageMortgageType">
+                                <option value="repayment">Repayment</option>
+                                <option value="interest_only">Interest Only</option>
+                            </select>
+                        </div>
+                    </div>
+                    <!-- LTV indicator -->
+                    <div class="utilisation-wrapper" id="ltvWrapper" style="display:none;">
+                        <div class="utilisation-label">
+                            <span>Loan-to-Value (LTV)</span>
+                            <span id="ltvPct">0%</span>
+                        </div>
+                        <div class="utilisation-bar-track">
+                            <div class="utilisation-bar-fill" id="ltvFill"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ─ Notes ─ -->
+                <div class="form-group">
+                    <label for="debtNotes">Notes (optional)</label>
+                    <input type="text" id="debtNotes" placeholder="Any additional context…">
+                </div>
+
+                <!-- ─ Projected payoff ─ -->
+                <div class="payoff-preview" id="payoffPreview" style="display:none;">
+                    <div class="payoff-title">📅 Projected Payoff</div>
+                    <div id="payoffContent"></div>
+                </div>
+
+                <button type="submit" class="save-btn save-btn--debt" id="debtSaveBtn">Save Debt</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ── History Modal ── -->
+    <div id="historyModal" class="modal">
+        <div class="modal-content modal-content--wide">
+            <span class="close-btn" onclick="closeHistoryModal()">&times;</span>
+            <h2 id="historyModalTitle">Balance History</h2>
+            <div id="historyContent" class="history-content"></div>
         </div>
     </div>
 
