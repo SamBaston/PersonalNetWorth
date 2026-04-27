@@ -7,6 +7,7 @@
     <meta name="description" content="A sleek, modern application to track your personal assets, liabilities, and overall net worth.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -15,97 +16,200 @@
             <p>Your financial snapshot at a glance.</p>
         </header>
         
+        <!-- ── Tab Navigation ── -->
+        <nav class="tab-nav" role="tablist">
+            <button class="tab-btn active" id="tab-btn-overview" role="tab" aria-selected="true" onclick="switchTab('overview')">📊 Overview</button>
+            <button class="tab-btn" id="tab-btn-analytics" role="tab" aria-selected="false" onclick="switchTab('analytics')">📈 Analytics</button>
+        </nav>
+
         <main>
-            <div class="dashboard">
-                <div class="card total-net-worth">
-                    <h2>Total Net Worth</h2>
-                    <div class="amount" id="net-worth-amount">£0.00</div>
-                </div>
-                
-                <div class="details-section">
-                    <!-- ── Assets ── -->
-                    <div class="card assets">
-                        <h3>Assets</h3>
-                        
-                        <div class="asset-category">
-                            <div class="category-header">
-                                <h4>Bank Accounts</h4>
-                                <button class="add-btn" id="add-bank-btn" onclick="openModal('bank_accounts')">+ Add</button>
+            <!-- ── Overview Tab ── -->
+            <div id="tab-overview" class="tab-panel active">
+                <div class="dashboard">
+                    <div class="card total-net-worth">
+                        <h2>Total Net Worth</h2>
+                        <div class="amount" id="net-worth-amount">£0.00</div>
+                    </div>
+
+                    <div class="details-section">
+                        <!-- ── Assets ── -->
+                        <div class="card assets">
+                            <h3>Assets</h3>
+
+                            <div class="asset-category">
+                                <div class="category-header">
+                                    <h4>Bank Accounts</h4>
+                                    <button class="add-btn" id="add-bank-btn" onclick="openModal('bank_accounts')">+ Add</button>
+                                </div>
+                                <ul id="bank-accounts-list" class="item-list"></ul>
                             </div>
-                            <ul id="bank-accounts-list" class="item-list"></ul>
+
+                            <div class="asset-category">
+                                <div class="category-header">
+                                    <h4>ISAs &amp; LISAs</h4>
+                                    <div>
+                                        <button class="add-btn" id="add-isa-btn" onclick="openModal('isas')">+ ISA</button>
+                                        <button class="add-btn" id="add-lisa-btn" onclick="openModal('lisas')">+ LISA</button>
+                                    </div>
+                                </div>
+                                <ul id="isas-list" class="item-list"></ul>
+                            </div>
+
+                            <div class="asset-category">
+                                <div class="category-header">
+                                    <h4>Stock Portfolios</h4>
+                                    <button class="add-btn" id="add-stock-btn" onclick="openModal('stock_portfolios')">+ Add</button>
+                                </div>
+                                <ul id="stocks-list" class="item-list"></ul>
+                            </div>
+
+                            <div class="total" style="margin-top:2rem">
+                                <span>Total Assets:</span>
+                                <span id="total-assets" class="positive">£0.00</span>
+                            </div>
                         </div>
 
-                        <div class="asset-category">
-                            <div class="category-header">
-                                <h4>ISAs &amp; LISAs</h4>
-                                <div>
-                                    <button class="add-btn" id="add-isa-btn" onclick="openModal('isas')">+ ISA</button>
-                                    <button class="add-btn" id="add-lisa-btn" onclick="openModal('lisas')">+ LISA</button>
+                        <!-- ── Liabilities ── -->
+                        <div class="card liabilities">
+                            <div class="liabilities-header">
+                                <h3>Liabilities</h3>
+                                <div class="debt-add-buttons">
+                                    <button class="add-btn add-btn-debt" id="add-student-loan-btn" onclick="openDebtModal('student_loans')">+ Student Loan</button>
+                                    <button class="add-btn add-btn-debt" id="add-credit-card-btn" onclick="openDebtModal('credit_cards')">+ Credit Card</button>
+                                    <button class="add-btn add-btn-debt" id="add-loan-btn" onclick="openDebtModal('personal_loans')">+ Personal Loan</button>
+                                    <button class="add-btn add-btn-debt" id="add-mortgage-btn" onclick="openDebtModal('mortgages')">+ Mortgage</button>
                                 </div>
                             </div>
-                            <ul id="isas-list" class="item-list"></ul>
-                        </div>
 
-                        <div class="asset-category">
-                            <div class="category-header">
-                                <h4>Stock Portfolios</h4>
-                                <button class="add-btn" id="add-stock-btn" onclick="openModal('stock_portfolios')">+ Add</button>
+                            <div class="asset-category" id="student-loans-section">
+                                <div class="category-header"><h4>🎓 Student Loans</h4></div>
+                                <ul id="student-loans-list" class="item-list"></ul>
                             </div>
-                            <ul id="stocks-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="total" style="margin-top:2rem">
-                            <span>Total Assets:</span>
-                            <span id="total-assets" class="positive">£0.00</span>
-                        </div>
-                    </div>
-
-                    <!-- ── Liabilities ── -->
-                    <div class="card liabilities">
-                        <div class="liabilities-header">
-                            <h3>Liabilities</h3>
-                            <div class="debt-add-buttons">
-                                <button class="add-btn add-btn-debt" id="add-student-loan-btn" onclick="openDebtModal('student_loans')">+ Student Loan</button>
-                                <button class="add-btn add-btn-debt" id="add-credit-card-btn" onclick="openDebtModal('credit_cards')">+ Credit Card</button>
-                                <button class="add-btn add-btn-debt" id="add-loan-btn" onclick="openDebtModal('personal_loans')">+ Personal Loan</button>
-                                <button class="add-btn add-btn-debt" id="add-mortgage-btn" onclick="openDebtModal('mortgages')">+ Mortgage</button>
+                            <div class="asset-category" id="credit-cards-section">
+                                <div class="category-header"><h4>💳 Credit Cards</h4></div>
+                                <ul id="credit-cards-list" class="item-list"></ul>
                             </div>
-                        </div>
-                        
-                        <div class="asset-category" id="student-loans-section">
-                            <div class="category-header">
-                                <h4>🎓 Student Loans</h4>
+                            <div class="asset-category" id="personal-loans-section">
+                                <div class="category-header"><h4>🏦 Personal Loans</h4></div>
+                                <ul id="personal-loans-list" class="item-list"></ul>
                             </div>
-                            <ul id="student-loans-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="asset-category" id="credit-cards-section">
-                            <div class="category-header">
-                                <h4>💳 Credit Cards</h4>
+                            <div class="asset-category" id="mortgages-section">
+                                <div class="category-header"><h4>🏠 Mortgages</h4></div>
+                                <ul id="mortgages-list" class="item-list"></ul>
                             </div>
-                            <ul id="credit-cards-list" class="item-list"></ul>
-                        </div>
 
-                        <div class="asset-category" id="personal-loans-section">
-                            <div class="category-header">
-                                <h4>🏦 Personal Loans</h4>
+                            <div class="total">
+                                <span>Total Liabilities:</span>
+                                <span id="total-liabilities" class="negative">£0.00</span>
                             </div>
-                            <ul id="personal-loans-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="asset-category" id="mortgages-section">
-                            <div class="category-header">
-                                <h4>🏠 Mortgages</h4>
-                            </div>
-                            <ul id="mortgages-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="total">
-                            <span>Total Liabilities:</span>
-                            <span id="total-liabilities" class="negative">£0.00</span>
                         </div>
                     </div>
                 </div>
+            </div>
+
+            <!-- ── Analytics Tab ── -->
+            <div id="tab-analytics" class="tab-panel">
+
+                <!-- KPI Strip -->
+                <div class="kpi-strip">
+                    <div class="kpi-card">
+                        <div class="kpi-icon">💰</div>
+                        <div class="kpi-label">Net Worth</div>
+                        <div class="kpi-value" id="kpi-net-worth">£0.00</div>
+                        <div class="kpi-sub" id="kpi-nw-sub">–</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon">📈</div>
+                        <div class="kpi-label">Total Assets</div>
+                        <div class="kpi-value positive" id="kpi-assets">£0.00</div>
+                        <div class="kpi-sub" id="kpi-assets-sub">–</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon">📉</div>
+                        <div class="kpi-label">Total Liabilities</div>
+                        <div class="kpi-value negative" id="kpi-liabilities">£0.00</div>
+                        <div class="kpi-sub" id="kpi-liab-sub">–</div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon">📅</div>
+                        <div class="kpi-label">Monthly Obligations</div>
+                        <div class="kpi-value" id="kpi-monthly">£0.00</div>
+                        <div class="kpi-sub" id="kpi-monthly-sub">–</div>
+                    </div>
+                </div>
+
+                <!-- Full Width Chart: Net Worth Over Time -->
+                <div class="card chart-card" style="margin-bottom: 1.5rem;">
+                    <h3>Net Worth Over Time (Historic & Projected)</h3>
+                    <p class="chart-subtitle">Scatter graph showing your past wealth trajectory and future predictions based on current growth</p>
+                    <div class="chart-container" style="max-height: 400px;">
+                        <canvas id="chart-net-worth-history" style="max-height: 400px;"></canvas>
+                    </div>
+                </div>
+
+                <!-- Charts Row 1: Allocation + D/E -->
+                <div class="analytics-grid-2">
+                    <div class="card chart-card">
+                        <h3>Asset Allocation</h3>
+                        <p class="chart-subtitle">Breakdown by asset class</p>
+                        <div class="chart-container">
+                            <canvas id="chart-allocation"></canvas>
+                        </div>
+                    </div>
+                    <div class="card chart-card">
+                        <h3>Debt-to-Equity</h3>
+                        <p class="chart-subtitle">Owned equity vs total liabilities</p>
+                        <div class="chart-container">
+                            <canvas id="chart-dte"></canvas>
+                        </div>
+                        <div class="dte-metrics" id="dte-metrics"></div>
+                    </div>
+                </div>
+
+                <!-- Charts Row 2: Liquidity + Liability Breakdown -->
+                <div class="analytics-grid-2">
+                    <div class="card chart-card">
+                        <h3>Liquidity Ratio</h3>
+                        <p class="chart-subtitle">Cash vs monthly debt obligations</p>
+                        <div id="liquidity-display"></div>
+                        <div class="chart-container chart-container--sm">
+                            <canvas id="chart-liquidity"></canvas>
+                        </div>
+                    </div>
+                    <div class="card chart-card">
+                        <h3>Liability Breakdown</h3>
+                        <p class="chart-subtitle">Outstanding balance by debt type</p>
+                        <div class="chart-container">
+                            <canvas id="chart-liabilities"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Metric Cards Row -->
+                <div class="analytics-grid-3">
+                    <div class="card metric-card">
+                        <div class="metric-icon">🛡️</div>
+                        <div class="metric-label">Emergency Fund</div>
+                        <div class="metric-value" id="metric-emergency">—</div>
+                        <div class="metric-desc">months of debt covered by cash</div>
+                        <div class="metric-bar-track"><div class="metric-bar-fill" id="metric-emergency-bar"></div></div>
+                    </div>
+                    <div class="card metric-card">
+                        <div class="metric-icon">⚖️</div>
+                        <div class="metric-label">Solvency Ratio</div>
+                        <div class="metric-value" id="metric-solvency">—</div>
+                        <div class="metric-desc">% of total assets you own outright</div>
+                        <div class="metric-bar-track"><div class="metric-bar-fill" id="metric-solvency-bar"></div></div>
+                    </div>
+                    <div class="card metric-card">
+                        <div class="metric-icon">🚀</div>
+                        <div class="metric-label">Investment Ratio</div>
+                        <div class="metric-value" id="metric-invest">—</div>
+                        <div class="metric-desc">% of assets held in investments</div>
+                        <div class="metric-bar-track"><div class="metric-bar-fill" id="metric-invest-bar"></div></div>
+                    </div>
+                </div>
+
             </div>
         </main>
     </div>

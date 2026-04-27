@@ -124,6 +124,9 @@ function updateDashboard(data) {
     const nwEl = document.getElementById('net-worth-amount');
     nwEl.textContent = fmt(nw);
     nwEl.style.color = nw >= 0 ? 'var(--positive)' : 'var(--negative)';
+
+    // Update the analytics tab charts and metrics
+    updateAnalytics(data, totalAssets, totalLiabilities);
 }
 
 // ─── Asset List Item ──────────────────────────────────────────────────────────
@@ -536,3 +539,480 @@ function openHistoryModal(item, name) {
 }
 
 function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+
+// ─── Tab Switching ────────────────────────────────────────────────────────────
+function switchTab(tab) {
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active');
+        b.setAttribute('aria-selected', 'false');
+    });
+    document.getElementById(`tab-${tab}`).classList.add('active');
+    const btn = document.getElementById(`tab-btn-${tab}`);
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+}
+
+// ─── Analytics Dashboard ──────────────────────────────────────────────────────
+const _charts = {};
+
+function _destroyChart(id) {
+    if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+}
+
+const C = {
+    blue:   '#3b82f6', purple: '#8b5cf6', green:  '#10b981',
+    orange: '#f59e0b', red:    '#ef4444', teal:   '#06b6d4',
+    indigo: '#6366f1', pink:   '#ec4899'
+};
+
+const TOOLTIP_DEFAULTS = {
+    backgroundColor: '#0f172a',
+    borderColor: 'rgba(255,255,255,0.1)',
+    borderWidth: 1,
+    titleColor: '#f8fafc',
+    bodyColor: '#94a3b8',
+    padding: 12,
+    cornerRadius: 8,
+    displayColors: true
+};
+
+// Called from updateDashboard after totals are computed
+function updateAnalytics(data, totalAssets, totalLiabilities) {
+    const FX = 0.79;
+    const toGBP = (v, cur) => cur === 'USD' ? v * FX : v;
+
+    // ── Asset class buckets ──────────────────────────────────────
+    let cash = 0, investments = 0, property = 0;
+
+    (data.assets?.bank_accounts || []).forEach(a => cash += toGBP(a.balance, a.currency));
+    (data.assets?.isas || []).forEach(a => cash += toGBP(a.balance, a.currency));
+    (data.assets?.lisas || []).forEach(a => {
+        cash += toGBP((a.base_balance + (a.realized_bonus || 0)) + (a.pending_bonus || 0), a.currency);
+    });
+    (data.assets?.stock_portfolios || []).forEach(a => investments += toGBP(a.balance || 0, a.currency || 'GBP'));
+    (data.liabilities?.mortgages || []).forEach(m => {
+        if (m.property_value) property += toGBP(parseFloat(m.property_value), 'GBP');
+    });
+
+    // ── Monthly debt obligations ─────────────────────────────────
+    let monthlyObligations = 0;
+    ['credit_cards', 'personal_loans', 'mortgages'].forEach(cat => {
+        (data.liabilities?.[cat] || []).forEach(d =>
+            monthlyObligations += toGBP(parseFloat(d.minimum_monthly_payment) || 0, d.currency || 'GBP')
+        );
+    });
+
+    // ── Liability breakdown ───────────────────────────────────────
+    const liabBreakdown = { student_loans: 0, credit_cards: 0, personal_loans: 0, mortgages: 0 };
+    Object.keys(liabBreakdown).forEach(cat => {
+        (data.liabilities?.[cat] || []).forEach(d =>
+            liabBreakdown[cat] += toGBP(d.balance, d.currency || 'GBP')
+        );
+    });
+
+    const netWorth = totalAssets - totalLiabilities;
+
+    // ── KPI strip ────────────────────────────────────────────────
+    const nwEl = document.getElementById('kpi-net-worth');
+    nwEl.textContent = fmt(netWorth);
+    nwEl.style.color = netWorth >= 0 ? 'var(--positive)' : 'var(--negative)';
+    document.getElementById('kpi-nw-sub').textContent =
+        totalAssets > 0 ? `${((netWorth / totalAssets) * 100).toFixed(1)}% solvency` : '–';
+
+    document.getElementById('kpi-assets').textContent = fmt(totalAssets);
+    document.getElementById('kpi-assets-sub').textContent =
+        `${(cash > 0 ? ((cash / totalAssets) * 100).toFixed(0) : 0)}% cash`;
+
+    document.getElementById('kpi-liabilities').textContent = fmt(totalLiabilities);
+    document.getElementById('kpi-liab-sub').textContent =
+        totalAssets > 0 ? `${((totalLiabilities / totalAssets) * 100).toFixed(1)}% of assets` : '–';
+
+    document.getElementById('kpi-monthly').textContent = fmt(monthlyObligations);
+    document.getElementById('kpi-monthly-sub').textContent =
+        monthlyObligations > 0 ? `${fmt(monthlyObligations * 12)}/yr` : 'No payments tracked';
+
+    // ── Render charts ────────────────────────────────────────────
+    _renderAllocationChart(cash, investments, property, totalAssets);
+    _renderDTEChart(totalAssets, totalLiabilities);
+    _renderLiquidityChart(cash, monthlyObligations);
+    _renderLiabilityBreakdown(liabBreakdown);
+    _renderNetWorthHistoryChart(data, netWorth);
+
+    // ── Metric cards ─────────────────────────────────────────────
+    _updateMetrics(cash, monthlyObligations, totalAssets, totalLiabilities, investments);
+}
+
+function _renderAllocationChart(cash, investments, property, total) {
+    _destroyChart('allocation');
+    const canvas = document.getElementById('chart-allocation');
+    if (!canvas) return;
+    if (total === 0) {
+        canvas.parentElement.innerHTML = '<div class="chart-empty">Add some assets to see allocation.</div>';
+        return;
+    }
+    _charts['allocation'] = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: ['Cash & Savings', 'Investments', 'Property'],
+            datasets: [{ data: [cash, investments, property],
+                backgroundColor: [C.blue, C.purple, C.green],
+                borderColor: '#1e293b', borderWidth: 3, hoverOffset: 8 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true, cutout: '65%',
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#94a3b8',
+                    font: { family: 'Inter', size: 11 }, padding: 14,
+                    usePointStyle: true, pointStyleWidth: 9 } },
+                tooltip: { ...TOOLTIP_DEFAULTS, callbacks: {
+                    label: ctx => {
+                        const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                        return `  ${fmt(ctx.parsed)}  (${pct}%)`;
+                    }
+                }}
+            }
+        }
+    });
+}
+
+function _renderDTEChart(totalAssets, totalLiabilities) {
+    _destroyChart('dte');
+    const canvas = document.getElementById('chart-dte');
+    if (!canvas) return;
+    const equity = Math.max(0, totalAssets - totalLiabilities);
+    const dteRatio = totalAssets > 0 ? (totalLiabilities / totalAssets).toFixed(2) : '∞';
+    const debtPct = totalAssets > 0 ? ((totalLiabilities / totalAssets) * 100).toFixed(1) : 0;
+    const rating = parseFloat(debtPct) < 30
+        ? { text: '🟢 Low Leverage', color: 'var(--positive)' }
+        : parseFloat(debtPct) < 60
+        ? { text: '🟡 Moderate Leverage', color: 'var(--warning)' }
+        : { text: '🔴 High Leverage', color: 'var(--negative)' };
+
+    if (totalAssets === 0 && totalLiabilities === 0) {
+        canvas.parentElement.innerHTML = '<div class="chart-empty">No data to display yet.</div>';
+        return;
+    }
+    _charts['dte'] = new Chart(canvas, {
+        type: 'doughnut',
+        data: {
+            labels: ['Equity (Owned)', 'Liabilities (Owed)'],
+            datasets: [{ data: [equity, totalLiabilities],
+                backgroundColor: [C.green, C.red],
+                borderColor: '#1e293b', borderWidth: 3, hoverOffset: 8 }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true, cutout: '65%',
+            plugins: {
+                legend: { position: 'bottom', labels: { color: '#94a3b8',
+                    font: { family: 'Inter', size: 11 }, padding: 14,
+                    usePointStyle: true, pointStyleWidth: 9 } },
+                tooltip: { ...TOOLTIP_DEFAULTS, callbacks: { label: ctx => `  ${fmt(ctx.parsed)}` } }
+            }
+        }
+    });
+
+    document.getElementById('dte-metrics').innerHTML = `
+        <div class="dte-stat"><span class="dte-label">D/E Ratio</span><span class="dte-value">${dteRatio}</span></div>
+        <div class="dte-stat"><span class="dte-label">Debt %</span><span class="dte-value">${debtPct}%</span></div>
+        <div class="dte-stat"><span class="dte-label">Equity</span><span class="dte-value">${fmt(equity)}</span></div>
+        <div class="dte-rating" style="color:${rating.color};width:100%;text-align:center">${rating.text}</div>`;
+}
+
+function _renderLiquidityChart(cash, monthlyObligations) {
+    _destroyChart('liquidity');
+    const canvas = document.getElementById('chart-liquidity');
+    const display = document.getElementById('liquidity-display');
+    if (!canvas || !display) return;
+
+    const ratio = monthlyObligations > 0 ? cash / monthlyObligations : (cash > 0 ? 99 : 0);
+    const months = ratio >= 99 ? '∞' : ratio.toFixed(1);
+    const r = ratio >= 6 ? { label: 'Excellent', color: '#10b981', bg: 'rgba(16,185,129,0.1)', border: '#10b981' }
+        : ratio >= 3    ? { label: 'Good',      color: '#3b82f6', bg: 'rgba(59,130,246,0.1)',  border: '#3b82f6' }
+        : ratio >= 1    ? { label: 'Fair',      color: '#f59e0b', bg: 'rgba(245,158,11,0.1)',  border: '#f59e0b' }
+        :                 { label: 'Critical',  color: '#ef4444', bg: 'rgba(239,68,68,0.1)',   border: '#ef4444' };
+
+    display.innerHTML = `
+        <div class="liquidity-ratio-display" style="background:${r.bg};border-color:${r.border}">
+            <div class="liquidity-months" style="color:${r.color}">${months}</div>
+            <div class="liquidity-label">months of obligations covered by cash</div>
+            <div class="liquidity-rating" style="color:${r.color}">${r.label}</div>
+        </div>`;
+
+    if (cash === 0 && monthlyObligations === 0) { canvas.style.display = 'none'; return; }
+
+    _charts['liquidity'] = new Chart(canvas, {
+        type: 'bar',
+        data: {
+            labels: ['Cash & Savings', '6-Month Target'],
+            datasets: [{ data: [cash, monthlyObligations * 6],
+                backgroundColor: [C.blue, C.orange],
+                borderRadius: 8, borderSkipped: false }]
+        },
+        options: {
+            responsive: true, maintainAspectRatio: true, indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: { ...TOOLTIP_DEFAULTS, callbacks: { label: ctx => `  ${fmt(ctx.parsed.x)}` } }
+            },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.05)' },
+                     ticks: { color: '#64748b', callback: v => '£' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) } },
+                y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
+            }
+        }
+    });
+}
+
+function _renderLiabilityBreakdown(breakdown) {
+    _destroyChart('liabilities');
+    const canvas = document.getElementById('chart-liabilities');
+    if (!canvas) return;
+    const labels  = ['Student Loans', 'Credit Cards', 'Personal Loans', 'Mortgages'];
+    const values  = [breakdown.student_loans, breakdown.credit_cards, breakdown.personal_loans, breakdown.mortgages];
+    const colors  = [C.indigo, C.red, C.orange, C.purple];
+    const total   = values.reduce((a, b) => a + b, 0);
+    if (total === 0) {
+        canvas.parentElement.innerHTML = '<div class="chart-empty">No liabilities recorded yet.</div>';
+        return;
+    }
+    _charts['liabilities'] = new Chart(canvas, {
+        type: 'bar',
+        data: { labels, datasets: [{ data: values, backgroundColor: colors,
+                borderRadius: 8, borderSkipped: false }] },
+        options: {
+            responsive: true, maintainAspectRatio: true, indexAxis: 'y',
+            plugins: {
+                legend: { display: false },
+                tooltip: { ...TOOLTIP_DEFAULTS, callbacks: {
+                    label: ctx => {
+                        const pct = total > 0 ? ((ctx.parsed.x / total) * 100).toFixed(1) : 0;
+                        return `  ${fmt(ctx.parsed.x)}  (${pct}%)`;
+                    }
+                }}
+            },
+            scales: {
+                x: { grid: { color: 'rgba(255,255,255,0.05)' },
+                     ticks: { color: '#64748b', callback: v => '£' + (v >= 1000 ? (v/1000).toFixed(0)+'k' : v) } },
+                y: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 11 } } }
+            }
+        }
+    });
+}
+
+function _updateMetrics(cash, monthlyObligs, totalAssets, totalLiabilities, investments) {
+    // Emergency Fund (target: 6 months)
+    const emergencyMonths = monthlyObligs > 0 ? cash / monthlyObligs : (cash > 0 ? 12 : 0);
+    const emergencyPct = Math.min(100, (emergencyMonths / 6) * 100);
+    const emergencyEl = document.getElementById('metric-emergency');
+    if (emergencyEl) {
+        emergencyEl.textContent = emergencyMonths >= 12 ? '12+ mo' : `${emergencyMonths.toFixed(1)} mo`;
+        emergencyEl.style.color = emergencyMonths >= 6 ? 'var(--positive)'
+            : emergencyMonths >= 3 ? 'var(--warning)' : 'var(--negative)';
+        const bar = document.getElementById('metric-emergency-bar');
+        if (bar) { bar.style.width = `${emergencyPct}%`;
+            bar.style.background = emergencyMonths >= 6 ? '#10b981' : emergencyMonths >= 3 ? '#f59e0b' : '#ef4444'; }
+    }
+
+    // Solvency Ratio
+    const solvencyPct = totalAssets > 0 ? Math.max(0, ((totalAssets - totalLiabilities) / totalAssets) * 100) : 0;
+    const solvencyEl = document.getElementById('metric-solvency');
+    if (solvencyEl) {
+        solvencyEl.textContent = `${solvencyPct.toFixed(1)}%`;
+        solvencyEl.style.color = solvencyPct >= 70 ? 'var(--positive)'
+            : solvencyPct >= 40 ? 'var(--warning)' : 'var(--negative)';
+        const bar = document.getElementById('metric-solvency-bar');
+        if (bar) { bar.style.width = `${solvencyPct}%`;
+            bar.style.background = solvencyPct >= 70 ? '#10b981' : solvencyPct >= 40 ? '#f59e0b' : '#ef4444'; }
+    }
+
+    // Investment Ratio
+    const investPct = totalAssets > 0 ? (investments / totalAssets) * 100 : 0;
+    const investEl = document.getElementById('metric-invest');
+    if (investEl) {
+        investEl.textContent = `${investPct.toFixed(1)}%`;
+        investEl.style.color = investPct >= 30 ? 'var(--positive)'
+            : investPct >= 10 ? 'var(--warning)' : 'var(--text-secondary)';
+        const bar = document.getElementById('metric-invest-bar');
+        if (bar) { bar.style.width = `${Math.min(100, investPct)}%`;
+            bar.style.background = 'linear-gradient(90deg, #8b5cf6, #3b82f6)'; }
+    }
+}
+
+function _renderNetWorthHistoryChart(data, currentNetWorth) {
+    _destroyChart('netWorthHistory');
+    const canvas = document.getElementById('chart-net-worth-history');
+    if (!canvas) return;
+
+    const FX = 0.79;
+    const toGBP = (v, cur) => cur === 'USD' ? (v * FX) : v;
+    
+    let allDates = new Set();
+    const assets = [];
+    const debts = [];
+
+    // Extract all items into flat lists
+    ['bank_accounts', 'isas', 'lisas', 'stock_portfolios'].forEach(cat => {
+        if (data.assets && data.assets[cat]) {
+            data.assets[cat].forEach(a => assets.push(a));
+        }
+    });
+    
+    ['student_loans', 'credit_cards', 'personal_loans', 'mortgages'].forEach(cat => {
+        if (data.liabilities && data.liabilities[cat]) {
+            data.liabilities[cat].forEach(d => debts.push(d));
+        }
+    });
+
+    // Add today to ensure current data is plotted
+    const today = new Date().toISOString().split('T')[0];
+    allDates.add(today);
+
+    // Add dates from history
+    assets.forEach(a => {
+        if (a.history) a.history.forEach(h => allDates.add(h.date.split('T')[0]));
+    });
+    debts.forEach(d => {
+        if (d.history) d.history.forEach(h => allDates.add(h.date.split('T')[0]));
+    });
+
+    const sortedDates = Array.from(allDates).sort((a, b) => new Date(a) - new Date(b));
+
+    // Compute Net Worth at each date
+    const historyPoints = [];
+    
+    sortedDates.forEach(date => {
+        let dateAssets = 0;
+        let dateDebts = 0;
+        
+        assets.forEach(a => {
+            // Find the last history entry on or before this date
+            const h = [...(a.history || [])].reverse().find(x => x.date.split('T')[0] <= date);
+            if (h) {
+                let bal = h.balance || 0;
+                if (h.base_balance !== undefined) {
+                    bal = h.base_balance + (h.pending_bonus || 0);
+                }
+                dateAssets += toGBP(bal, a.currency || 'GBP');
+            }
+        });
+        
+        debts.forEach(d => {
+             const h = [...(d.history || [])].reverse().find(x => x.date.split('T')[0] <= date);
+             if (h) {
+                 dateDebts += toGBP(h.balance || 0, d.currency || 'GBP');
+             }
+        });
+        
+        const nw = dateAssets - dateDebts;
+        historyPoints.push({ x: date, y: nw });
+    });
+
+    // Compute simple average daily growth for projection
+    let dailyGrowth = 0;
+    if (historyPoints.length > 1) {
+        const first = historyPoints[0];
+        const last = historyPoints[historyPoints.length - 1];
+        const days = (new Date(last.x) - new Date(first.x)) / (1000 * 60 * 60 * 24);
+        if (days > 0) {
+            dailyGrowth = (last.y - first.y) / days;
+        }
+    }
+    
+    // Project 6 months into the future
+    const projectionPoints = [];
+    // Start projection from current net worth
+    projectionPoints.push({ x: today, y: currentNetWorth });
+    
+    const futureMonths = 6;
+    for (let i = 1; i <= futureMonths; i++) {
+        const d = new Date(today);
+        d.setMonth(d.getMonth() + i);
+        const futDate = d.toISOString().split('T')[0];
+        
+        const daysFromNow = (d - new Date(today)) / (1000 * 60 * 60 * 24);
+        const projectedNW = currentNetWorth + (dailyGrowth * daysFromNow);
+        
+        projectionPoints.push({ x: futDate, y: projectedNW });
+    }
+
+    if (historyPoints.length === 0) {
+        canvas.parentElement.innerHTML = '<div class="chart-empty">No history recorded yet.</div>';
+        return;
+    }
+
+    const allLabels = [...sortedDates];
+    for (let i = 1; i < projectionPoints.length; i++) {
+        allLabels.push(projectionPoints[i].x);
+    }
+    
+    const histData = allLabels.map(l => {
+        const pt = historyPoints.find(p => p.x === l);
+        return pt ? pt.y : null;
+    });
+    
+    const projData = allLabels.map(l => {
+        const pt = projectionPoints.find(p => p.x === l);
+        return pt ? pt.y : null;
+    });
+
+    _charts['netWorthHistory'] = new Chart(canvas, {
+        type: 'line',
+        data: {
+            labels: allLabels.map(d => new Date(d).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })),
+            datasets: [
+                {
+                    label: 'Historic Net Worth',
+                    data: histData,
+                    borderColor: C.blue,
+                    backgroundColor: 'rgba(59,130,246,0.2)',
+                    borderWidth: 3,
+                    pointBackgroundColor: C.blue,
+                    pointRadius: 4,
+                    fill: true,
+                    tension: 0.3,
+                    spanGaps: true
+                },
+                {
+                    label: 'Projected Net Worth',
+                    data: projData,
+                    borderColor: C.pink,
+                    borderDash: [5, 5],
+                    borderWidth: 3,
+                    pointBackgroundColor: C.pink,
+                    pointRadius: 4,
+                    fill: false,
+                    tension: 0.3,
+                    spanGaps: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+                mode: 'index',
+                intersect: false,
+            },
+            plugins: {
+                legend: { position: 'top', labels: { color: '#94a3b8', font: { family: 'Inter' } } },
+                tooltip: {
+                    ...TOOLTIP_DEFAULTS,
+                    callbacks: {
+                        label: ctx => `  ${ctx.dataset.label}: ${fmt(ctx.parsed.y)}`
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#64748b' }
+                },
+                y: {
+                    grid: { color: 'rgba(255,255,255,0.05)' },
+                    ticks: { color: '#94a3b8', callback: v => '£' + (v >= 1000 || v <= -1000 ? (v/1000).toFixed(0)+'k' : v) }
+                }
+            }
+        }
+    });
+}

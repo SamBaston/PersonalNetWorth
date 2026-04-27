@@ -9,6 +9,30 @@
         "currency": "GBP",
         "history": [
           {
+            "date": "2020-01-01T00:00:00.000Z",
+            "balance": 450
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "balance": 600
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "balance": 900
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
+            "balance": 1100
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "balance": 1250
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "balance": 1400
+          },
+          {
             "date": "2026-03-01T00:00:00.000Z",
             "balance": 1500
           }
@@ -21,6 +45,30 @@
         "balance": 5000,
         "currency": "GBP",
         "history": [
+          {
+            "date": "2020-01-01T00:00:00.000Z",
+            "balance": 1500
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "balance": 2100
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "balance": 2800
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
+            "balance": 3500
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "balance": 4100
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "balance": 4600
+          },
           {
             "date": "2026-03-01T00:00:00.000Z",
             "balance": 5000
@@ -36,6 +84,30 @@
         "balance": 12000,
         "currency": "GBP",
         "history": [
+          {
+            "date": "2020-01-01T00:00:00.000Z",
+            "balance": 3600
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "balance": 5000
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "balance": 6500
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
+            "balance": 7800
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "balance": 9500
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "balance": 11000
+          },
           {
             "date": "2026-03-01T00:00:00.000Z",
             "balance": 12000
@@ -54,9 +126,34 @@
         "currency": "GBP",
         "history": [
           {
-            "date": "2026-01-01T00:00:00.000Z",
+            "date": "2020-01-01T00:00:00.000Z",
+            "base_balance": 1200,
+            "pending_bonus": 300
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "base_balance": 1800,
+            "pending_bonus": 450
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "base_balance": 2400,
+            "pending_bonus": 600
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
             "base_balance": 3000,
             "pending_bonus": 750
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "base_balance": 3600,
+            "pending_bonus": 900
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "base_balance": 4000,
+            "pending_bonus": 1000
           },
           {
             "date": "2026-03-01T00:00:00.000Z",
@@ -75,6 +172,30 @@
         "currency": "GBP",
         "history": [
           {
+            "date": "2020-01-01T00:00:00.000Z",
+            "balance": 1000
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "balance": 1500
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "balance": 1800
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
+            "balance": 2200
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "balance": 2800
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "balance": 3200
+          },
+          {
             "date": "2026-03-01T00:00:00.000Z",
             "balance": 3500
           }
@@ -88,20 +209,50 @@
           {
             "symbol": "AAPL",
             "quantity": 10,
-            "current_price": 273.43,
+            "current_price": 271.06,
             "currency": "USD",
-            "value": 2734.3
+            "value": 2710.6
           },
           {
             "symbol": "MSFT",
             "quantity": 5,
-            "current_price": 415.75,
+            "current_price": 424.6,
             "currency": "USD",
-            "value": 2078.75
+            "value": 2123
           }
         ],
         "currency": "USD",
-        "balance": 4813.05
+        "balance": 4833.6,
+        "history": [
+          {
+            "date": "2020-01-01T00:00:00.000Z",
+            "balance": 1400
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "balance": 2000
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "balance": 2600
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
+            "balance": 3200
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "balance": 3900
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "balance": 4400
+          },
+          {
+            "date": "2026-03-01T00:00:00.000Z",
+            "balance": 4833.6
+          }
+        ]
       }
     ]
   },
@@ -111,65 +262,254 @@
         "id": "sl1",
         "name": "Student Loan",
         "plan_type": "plan2",
-        "balance": 38416.4,
+        "balance": 38439.22,
         "currency": "GBP",
         "annual_interest_rate": 7.3,
-        "last_accrual_date": "2026-04-24T11:54:53.338Z",
+        "last_accrual_date": "2026-04-27T11:11:40.375Z",
         "notes": "Plan 2 — repay 9% above £27,295/yr threshold",
         "history": [
           {
+            "date": "2020-01-01T00:00:00.000Z",
+            "balance": 26900,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "balance": 28500,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "balance": 30200,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
+            "balance": 32000,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "balance": 34100,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "balance": 36500,
+            "accrued_interest": 0
+          },
+          {
             "date": "2026-03-01T00:00:00.000Z",
-            "balance": 38000,
+            "balance": 38439.22,
             "accrued_interest": 0
           }
         ],
-        "accrued_since_last_update": 416.4
+        "accrued_since_last_update": 22.82
       }
     ],
     "credit_cards": [
       {
         "id": "cc1",
         "name": "Barclaycard",
-        "balance": 1241.73,
+        "balance": 1244.05,
         "currency": "GBP",
         "annual_interest_rate": 22.9,
         "minimum_monthly_payment": 30,
         "credit_limit": 3000,
-        "last_accrual_date": "2026-04-24T11:54:53.338Z",
+        "last_accrual_date": "2026-04-27T11:11:40.375Z",
         "notes": "",
         "history": [
           {
+            "date": "2020-01-01T00:00:00.000Z",
+            "balance": 1860,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "balance": 1750,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "balance": 1600,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
+            "balance": 1500,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "balance": 1400,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "balance": 1300,
+            "accrued_interest": 0
+          },
+          {
             "date": "2026-03-01T00:00:00.000Z",
-            "balance": 1200,
+            "balance": 1244.05,
             "accrued_interest": 0
           }
         ],
-        "accrued_since_last_update": 41.73
+        "accrued_since_last_update": 2.32
+      },
+      {
+        "id": "1777288395890",
+        "name": "Test card",
+        "balance": 1500,
+        "annual_interest_rate": 8,
+        "notes": "",
+        "currency": "GBP",
+        "credit_limit": "2000",
+        "minimum_monthly_payment": "200",
+        "last_accrual_date": "2026-04-27T11:13:15.890Z",
+        "history": [
+          {
+            "date": "2020-01-01T00:00:00.000Z",
+            "balance": 2250,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "balance": 2100,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "balance": 1950,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
+            "balance": 1800,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "balance": 1700,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "balance": 1600,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2026-04-27T11:13:15.890Z",
+            "balance": 1500,
+            "accrued_interest": 0
+          }
+        ]
       }
     ],
     "personal_loans": [
       {
         "id": "pl1",
         "name": "Car Loan",
-        "balance": 8588.01,
+        "balance": 8592.83,
         "currency": "GBP",
         "annual_interest_rate": 6.9,
         "minimum_monthly_payment": 220,
         "original_amount": 10000,
         "term_months": 48,
         "start_date": "2024-06-01T00:00:00.000Z",
-        "last_accrual_date": "2026-04-24T11:54:53.338Z",
+        "last_accrual_date": "2026-04-27T11:11:40.375Z",
         "notes": "",
         "history": [
           {
+            "date": "2020-01-01T00:00:00.000Z",
+            "balance": 12800,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "balance": 12000,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "balance": 11200,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
+            "balance": 10500,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "balance": 9800,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "balance": 9100,
+            "accrued_interest": 0
+          },
+          {
             "date": "2026-03-01T00:00:00.000Z",
-            "balance": 8500,
+            "balance": 8592.83,
             "accrued_interest": 0
           }
         ],
-        "accrued_since_last_update": 88.01
+        "accrued_since_last_update": 4.82
       }
     ],
-    "mortgages": []
+    "mortgages": [
+      {
+        "id": "1777289071417",
+        "name": "house",
+        "balance": 200000,
+        "annual_interest_rate": 5,
+        "notes": "",
+        "currency": "GBP",
+        "minimum_monthly_payment": "1500",
+        "property_value": "300000",
+        "term_months": "250",
+        "mortgage_type": "repayment",
+        "last_accrual_date": "2026-04-27T11:24:31.417Z",
+        "history": [
+          {
+            "date": "2020-01-01T00:00:00.000Z",
+            "balance": 250000,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2021-01-01T00:00:00.000Z",
+            "balance": 240000,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2022-01-01T00:00:00.000Z",
+            "balance": 230000,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2023-01-01T00:00:00.000Z",
+            "balance": 222000,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2024-01-01T00:00:00.000Z",
+            "balance": 215000,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2025-01-01T00:00:00.000Z",
+            "balance": 208000,
+            "accrued_interest": 0
+          },
+          {
+            "date": "2026-04-27T11:24:31.417Z",
+            "balance": 200000,
+            "accrued_interest": 0
+          }
+        ]
+      }
+    ]
   }
 }

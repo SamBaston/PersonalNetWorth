@@ -1,0 +1,39 @@
+I used Antigravity IDE which used both Gemini 3.1 and Claude 4.6.
+
+The first prompt I used was as follows:
+
+```text
+Now that we have the main bulk of the infrastructure, we need to add dashboards.
+
+The dashboard must serve as the primary analytics hub featuring:
+Total Net Worth: Aggregated Assets minus Aggregated Liabilities.
+Asset Allocation Pie Chart: Breakdown of Cash vs. Investments vs. Property.
+Debt-to-Equity Ratio: Visual representation of leverage.
+Liquidity Ratio: Ratio of cash-on-hand to monthly debt obligations.
+
+Add any other metrics that a user could benefit from.
+
+Use libraries like GraphJS to make pie charts and scatter graphs where appropriate.
+```
+
+Specifying what library to use yeilded far better results than previous prompts, and I was overall impressed with the output but wanted to see what else it could do with me being more specific and complicated:
+
+```text
+Can you add a dashboard that can display my net worth and how it changes over time. Add some graphs and charts to make it more visually appealing. A scatter graph showing historic totals and then the future predictions would be useful (in different colours)
+```
+
+This produced the graph I was looking for, but I have noticed some inconsistencies within the dhasboards themselves. They all seem to be in disagreement about the trajectory of the net worth, with some saying I have a good spending ratio compared to the scattergraph which predicts I would gain around £350,000 of debt from now till October. It may be a case that because there isn't a large amount of historic data to work off, it's struggling to make accurate predictions.
+
+I used:
+
+```text
+Add historic data for all present assets and debts. Have these span back to 2020 with reasonable update histories
+```
+
+Which resulted in it attempting to add a new js file instead of just editing the existing json. So, I asked it:
+
+```text
+just change the json, no new js is needed
+```
+
+which worked to fix the trajectory of the graph.
