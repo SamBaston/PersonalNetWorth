@@ -1,0 +1,33 @@
+WEALTHSPHERE EXPANDED FEATURES LIST
+=================================
+
+In addition to the requested features, the following enhancements have been implemented to provide a professional-grade financial auditing experience:
+
+1. FINANCIAL RESPONSIBILITY SCORE (DEBT-TO-EQUITY)
+   - Calculated as 100 - (Debt-to-Equity * 50), capped at 0-100.
+   - Provides an immediate pulse on financial leverage.
+
+2. ASSET MIX DISTRIBUTION PIE CHART
+   - Real-time breakdown of Cash vs Investments vs Fixed Assets.
+   - Helps in visualizing portfolio diversification.
+
+3. PREDICTIVE NET WORTH TRAJECTORY
+   - Area chart showing historical data (solid) vs future predictions (dotted).
+   - Utilizes estimated return rates (7% default for stocks, 2% for cash) and actual liability interest rates.
+
+4. INDIVIDUAL COMPONENT PROJECTIONS
+   - Users can click on any asset or liability to see its specific future value growth or debt decay.
+   - Differentiated lines (dotted for predictions).
+
+5. STRATEGY INSIGHTS (AI-STYLE ANALYTICS)
+   - Dynamic footer cards that analyze current leverage and predict goal completion dates.
+   - Tailored advice based on student loan plan interest vs investment returns.
+
+6. CURRENCY NORMALIZATION (GBP/USD)
+   - Automatic conversion for USD assets using real-time FX estimates (0.79 factor) for accurate total net-worth calculation.
+
+7. AUTOMATIC DAILY INTEREST ACCRUAL
+   - Liabilities automatically calculate interest accrued since the last update, ensuring the "Snapshot" is always accurate down to the day.
+
+8. RESPONSIVE DASHBOARD LAYOUT
+   - Modern, high-density interface designed for both long-term tracking and quick mobile check-ins.

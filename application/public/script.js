@@ -1,538 +1,421 @@
-// ─── Student Loan Plan Info ───────────────────────────────────────────────────
-const PLAN_INFO = {
-    plan1: { label: 'Plan 1', defaultRate: 6.25, threshold: 24990, repayPct: 9,  writeOffYears: 25, note: 'Repay 9% above £24,990/yr. Written off after 25 years.' },
-    plan2: { label: 'Plan 2', defaultRate: 7.3,  threshold: 27295, repayPct: 9,  writeOffYears: 30, note: 'Repay 9% above £27,295/yr. Written off after 30 years.' },
-    plan4: { label: 'Plan 4', defaultRate: 6.25, threshold: 31395, repayPct: 9,  writeOffYears: 30, note: 'Repay 9% above £31,395/yr (Scotland). Written off after 30 years.' },
-    plan5: { label: 'Plan 5', defaultRate: 7.3,  threshold: 25000, repayPct: 9,  writeOffYears: 40, note: 'Repay 9% above £25,000/yr. Written off after 40 years.' },
-    postgrad: { label: 'Postgraduate', defaultRate: 7.3, threshold: 21000, repayPct: 6, writeOffYears: 30, note: 'Repay 6% above £21,000/yr. Written off after 30 years.' }
-};
+let data = null;
+let wealthChart = null;
+let pieChart = null;
 
-// ─── Boot ─────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-    fetchWealthData();
+async function simulateScenario() {
+    const text = document.getElementById('intelligenceText');
+    const original = text.innerHTML;
+    text.innerHTML = '<span class="text-[#5A5A40] font-bold">Simulator Active:</span> Adjust individual entity parameters in more detail to stress-test your strategy.';
+    setTimeout(() => { text.innerHTML = original; }, 4000);
+}
 
-    document.getElementById('assetModal').addEventListener('click', e => {
-        if (e.target === document.getElementById('assetModal')) closeModal();
+async function exportData() {
+    if (!data) return;
+    const items = [];
+    Object.entries(data.assets).forEach(([cat, list]) => {
+        list.forEach(i => {
+            const val = (i.balance ?? 0) + (i.base_balance ?? 0) + (i.pending_bonus ?? 0);
+            items.push({ type: 'Asset', category: cat, name: i.name, value: val });
+        });
     });
-    document.getElementById('debtModal').addEventListener('click', e => {
-        if (e.target === document.getElementById('debtModal')) closeDebtModal();
+    Object.entries(data.liabilities).forEach(([cat, list]) => {
+        list.forEach(i => {
+            items.push({ type: 'Liability', category: cat, name: i.name, value: i.balance });
+        });
     });
-    document.getElementById('historyModal').addEventListener('click', e => {
-        if (e.target === document.getElementById('historyModal')) closeHistoryModal();
-    });
+    
+    const csv = 'Type,Category,Name,Value (GBP)\n' + items.map(i => `${i.type},${i.category},${i.name},${i.value}`).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `wealth_ledger_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+}
 
-    // Live credit utilisation preview
-    ['debtBalance','creditLimit'].forEach(id =>
-        document.getElementById(id).addEventListener('input', updateUtilisation)
-    );
-    // Live LTV preview
-    ['debtBalance','mortgagePropertyValue'].forEach(id =>
-        document.getElementById(id).addEventListener('input', updateLTV)
-    );
-    // Live payoff preview
-    ['debtBalance','debtRate','ccMinPayment','loanMinPayment','mortgageMinPayment'].forEach(id =>
-        document.getElementById(id).addEventListener('input', updatePayoffPreview)
-    );
-    // Student loan plan info box
-    document.getElementById('studentPlanType').addEventListener('change', updatePlanInfoBox);
-});
-
-// ─── Fetch & Render ───────────────────────────────────────────────────────────
-async function fetchWealthData() {
+async function fetchData() {
     try {
         const res = await fetch('/api/wealth');
-        if (!res.ok) throw new Error('Network error');
-        const data = await res.json();
-        updateDashboard(data);
+        data = await res.json();
+        renderDashboard();
     } catch (err) {
         console.error('Fetch error:', err);
-        document.getElementById('net-worth-amount').textContent = 'Error';
     }
-}
-
-function updateDashboard(data) {
-    const fxRateUsdToGbp = 0.79;
-    function toGBP(amount, currency) {
-        return currency === 'USD' ? amount * fxRateUsdToGbp : amount;
-    }
-
-    let totalAssets = 0;
-    let totalLiabilities = 0;
-
-    // ── Assets ──
-    const bankList    = document.getElementById('bank-accounts-list');
-    const isasList    = document.getElementById('isas-list');
-    const stocksList  = document.getElementById('stocks-list');
-    [bankList, isasList, stocksList].forEach(el => el.innerHTML = '');
-
-    if (data.assets.bank_accounts) {
-        data.assets.bank_accounts.forEach((acc, i) => {
-            totalAssets += toGBP(acc.balance, acc.currency);
-            bankList.appendChild(createAssetItem(acc.name, acc.balance, acc.currency, i, false, 'bank_accounts', acc));
-        });
-    }
-
-    let isaIdx = 0;
-    if (data.assets.isas) {
-        data.assets.isas.forEach(isa => {
-            totalAssets += toGBP(isa.balance, isa.currency);
-            isasList.appendChild(createAssetItem(isa.name, isa.balance, isa.currency, isaIdx++, false, 'isas', isa));
-        });
-    }
-    if (data.assets.lisas) {
-        data.assets.lisas.forEach(lisa => {
-            const base = lisa.base_balance + (lisa.realized_bonus || 0);
-            const bonus = lisa.pending_bonus || 0;
-            totalAssets += toGBP(base + bonus, lisa.currency);
-            isasList.appendChild(createAssetItem(lisa.name, base, lisa.currency, isaIdx++, false, 'lisas', lisa));
-            isasList.appendChild(createAssetItem('↳ Govt Bonus (25%)', bonus, lisa.currency, isaIdx++, true));
-        });
-    }
-
-    let sIdx = 0;
-    if (data.assets.stock_portfolios) {
-        data.assets.stock_portfolios.forEach(port => {
-            totalAssets += toGBP(port.balance || 0, port.currency || 'GBP');
-            stocksList.appendChild(createAssetItem(port.name, port.balance, port.currency || 'GBP', sIdx++, false, 'stock_portfolios', port));
-            if (port.type === 'tickers' && port.tickers) {
-                port.tickers.forEach(t => {
-                    stocksList.appendChild(createAssetItem(`↳ ${t.quantity}x ${t.symbol}`, t.value, t.currency, sIdx++, true));
-                });
-            }
-        });
-    }
-
-    // ── Liabilities ──
-    const categories = ['student_loans', 'credit_cards', 'personal_loans', 'mortgages'];
-    const listIds    = { student_loans: 'student-loans-list', credit_cards: 'credit-cards-list', personal_loans: 'personal-loans-list', mortgages: 'mortgages-list' };
-    const sections   = { student_loans: 'student-loans-section', credit_cards: 'credit-cards-section', personal_loans: 'personal-loans-section', mortgages: 'mortgages-section' };
-
-    categories.forEach(cat => {
-        const ul = document.getElementById(listIds[cat]);
-        ul.innerHTML = '';
-        const debts = data.liabilities && data.liabilities[cat] ? data.liabilities[cat] : [];
-        document.getElementById(sections[cat]).style.display = debts.length ? 'block' : 'none';
-        debts.forEach((debt, i) => {
-            totalLiabilities += toGBP(debt.balance, debt.currency || 'GBP');
-            ul.appendChild(createDebtItem(debt, cat, i));
-        });
-    });
-
-    document.getElementById('total-assets').textContent     = fmt(totalAssets);
-    document.getElementById('total-liabilities').textContent = fmt(totalLiabilities);
-    const nw = totalAssets - totalLiabilities;
-    const nwEl = document.getElementById('net-worth-amount');
-    nwEl.textContent = fmt(nw);
-    nwEl.style.color = nw >= 0 ? 'var(--positive)' : 'var(--negative)';
-}
-
-// ─── Asset List Item ──────────────────────────────────────────────────────────
-function createAssetItem(name, value, currency, index, isSubitem = false, category = null, fullAsset = null) {
-    const li = document.createElement('li');
-    li.style.animationDelay = `${index * 0.05}s`;
-
-    const mainDiv = document.createElement('div');
-    mainDiv.className = 'item-main';
-
-    if (isSubitem) {
-        li.style.cssText = 'padding-left:1.5rem;font-size:0.9em;border-bottom:none;padding-top:0.2rem;padding-bottom:0.2rem;';
-        const ns = document.createElement('span'); ns.className = 'item-name'; ns.style.color = 'var(--text-tertiary)'; ns.textContent = name;
-        const vs = document.createElement('span'); vs.className = 'item-value'; vs.style.color = 'var(--text-tertiary)'; vs.textContent = fmt(value, currency);
-        mainDiv.appendChild(ns); mainDiv.appendChild(vs); li.appendChild(mainDiv);
-        return li;
-    }
-
-    const ns = document.createElement('span'); ns.className = 'item-name'; ns.textContent = name;
-    const vs = document.createElement('span'); vs.className = 'item-value'; vs.textContent = fmt(value, currency);
-    mainDiv.appendChild(ns); mainDiv.appendChild(vs); li.appendChild(mainDiv);
-
-    if (fullAsset && category) {
-        const actions = document.createElement('div'); actions.className = 'item-actions';
-        const hBtn = makeBtn('📈', 'View history', () => openHistoryModal(fullAsset, name));
-        const eBtn = makeBtn('✏️', 'Edit', () => openModal(category, fullAsset));
-        const dBtn = makeBtn('🗑️', 'Delete', () => deleteAsset(category, fullAsset.id));
-        actions.append(hBtn, eBtn, dBtn); li.appendChild(actions);
-    }
-    return li;
-}
-
-// ─── Debt List Item ───────────────────────────────────────────────────────────
-function createDebtItem(debt, category, index) {
-    const li = document.createElement('li');
-    li.style.animationDelay = `${index * 0.05}s`;
-
-    const mainDiv = document.createElement('div'); mainDiv.className = 'item-main';
-    const ns = document.createElement('span'); ns.className = 'item-name';
-
-    // Badge for debt subtype
-    const badge = document.createElement('span');
-    badge.className = 'debt-badge';
-    if (category === 'student_loans' && debt.plan_type) {
-        badge.textContent = PLAN_INFO[debt.plan_type]?.label || debt.plan_type;
-    } else if (debt.annual_interest_rate) {
-        badge.textContent = `${parseFloat(debt.annual_interest_rate).toFixed(1)}% APR`;
-    }
-    ns.textContent = debt.name;
-    if (badge.textContent) ns.appendChild(badge);
-
-    const vs = document.createElement('span'); vs.className = 'item-value negative'; vs.textContent = fmt(debt.balance, debt.currency || 'GBP');
-    mainDiv.appendChild(ns); mainDiv.appendChild(vs); li.appendChild(mainDiv);
-
-    // Sub-info row
-    if (debt.minimum_monthly_payment || debt.accrued_since_last_update) {
-        const sub = document.createElement('div'); sub.className = 'debt-subinfo';
-        if (debt.minimum_monthly_payment) sub.innerHTML += `<span>Min. payment: ${fmt(debt.minimum_monthly_payment)}/mo</span>`;
-        if (debt.accrued_since_last_update && debt.accrued_since_last_update > 0)
-            sub.innerHTML += `<span class="accrued-tag">+${fmt(debt.accrued_since_last_update)} accrued</span>`;
-        li.appendChild(sub);
-    }
-
-    const actions = document.createElement('div'); actions.className = 'item-actions';
-    const hBtn = makeBtn('📈', 'View history', () => openHistoryModal(debt, debt.name));
-    const eBtn = makeBtn('✏️', 'Edit', () => openDebtModal(category, debt));
-    const dBtn = makeBtn('🗑️', 'Delete', () => deleteDebt(category, debt.id));
-    actions.append(hBtn, eBtn, dBtn); li.appendChild(actions);
-
-    return li;
-}
-
-function makeBtn(icon, title, onClick) {
-    const btn = document.createElement('button');
-    btn.className = 'action-btn'; btn.innerHTML = icon; btn.title = title; btn.onclick = onClick;
-    return btn;
 }
 
 function fmt(amount, currency = 'GBP') {
-    if (amount == null || isNaN(amount)) return '—';
-    return new Intl.NumberFormat('en-GB', { style: 'currency', currency: currency || 'GBP' }).format(amount);
+    return new Intl.NumberFormat('en-GB', { 
+        style: 'currency', 
+        currency: currency,
+        maximumFractionDigits: 0
+    }).format(amount);
 }
 
-// ─── Asset Modal ──────────────────────────────────────────────────────────────
-function openModal(category, asset = null) {
-    const modal = document.getElementById('assetModal');
-    modal.style.display = 'flex';
-    document.getElementById('assetCategory').value = category;
-
-    const lisaGroup    = document.getElementById('lisaGroup');
-    const balanceGroup = document.getElementById('balanceGroup');
-
-    if (category === 'lisas') {
-        lisaGroup.style.display = 'block'; balanceGroup.style.display = 'none';
-        document.getElementById('lisaBaseBalance').required = true;
-        document.getElementById('assetBalance').required = false;
-    } else {
-        lisaGroup.style.display = 'none'; balanceGroup.style.display = 'block';
-        document.getElementById('assetBalance').required = true;
-        document.getElementById('lisaBaseBalance').required = false;
-    }
-
-    if (asset) {
-        document.getElementById('modalTitle').textContent = 'Edit Asset';
-        document.getElementById('assetId').value = asset.id;
-        document.getElementById('assetName').value = asset.name || '';
-        document.getElementById('assetCurrency').value = asset.currency || 'GBP';
-        if (category === 'lisas') {
-            document.getElementById('lisaBaseBalance').value = asset.base_balance || 0;
-            document.getElementById('lisaPendingBonus').value = asset.pending_bonus || 0;
-        } else {
-            document.getElementById('assetBalance').value = asset.balance || 0;
-        }
-    } else {
-        document.getElementById('modalTitle').textContent = 'Add Asset';
-        document.getElementById('assetId').value = '';
-        document.getElementById('assetForm').reset();
-        document.getElementById('assetCategory').value = category;
-    }
+function abbreviate(v) {
+    if (Math.abs(v) >= 1000000) return '£' + (v / 1000000).toFixed(1).replace(/\.0$/, '') + 'M';
+    if (Math.abs(v) >= 1000) return '£' + (v / 1000).toFixed(0) + 'k';
+    return '£' + v;
 }
 
-function closeModal() { document.getElementById('assetModal').style.display = 'none'; }
+function renderDashboard() {
+    const { summary, assets, liabilities } = data;
 
-document.getElementById('assetForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const id = document.getElementById('assetId').value;
-    const category = document.getElementById('assetCategory').value;
-    const payload = {
-        name: document.getElementById('assetName').value,
-        currency: document.getElementById('assetCurrency').value
-    };
-    if (category === 'lisas') {
-        payload.base_balance = parseFloat(document.getElementById('lisaBaseBalance').value);
-        payload.pending_bonus = parseFloat(document.getElementById('lisaPendingBonus').value) || 0;
-        payload.type = 'Cash';
-    } else if (category === 'stock_portfolios') {
-        payload.balance = parseFloat(document.getElementById('assetBalance').value);
-        payload.type = 'manual';
-    } else {
-        payload.balance = parseFloat(document.getElementById('assetBalance').value);
-        payload.type = 'Custom';
-    }
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `/api/assets/${category}/${id}` : `/api/assets/${category}`;
-    const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    if (res.ok) { closeModal(); fetchWealthData(); }
-    else alert('Failed to save asset.');
-});
+    // Header
+    document.getElementById('totalWorth').textContent = fmt(summary.netWorth);
 
-async function deleteAsset(category, id) {
-    if (!confirm('Delete this asset permanently?')) return;
-    const res = await fetch(`/api/assets/${category}/${id}`, { method: 'DELETE' });
-    if (res.ok) fetchWealthData();
-}
+    // Score
+    document.getElementById('scoreText').textContent = Math.round(summary.responsibilityScore);
+    document.getElementById('ltvLabel').textContent = `LTV (Excl. Education): ${(summary.ltv * 100).toFixed(0)}%`;
+    const circle = document.getElementById('scoreCircle');
+    // Visual score clamped for circle but text shows real value
+    const visualScore = Math.max(0, Math.min(100, summary.responsibilityScore));
+    const offset = 264 - (264 * visualScore / 100);
+    circle.style.strokeDashoffset = offset;
+    circle.style.stroke = summary.responsibilityScore < 0 ? '#e11d48' : (summary.responsibilityScore < 50 ? '#A67C52' : '#5A5A40');
 
-// ─── Debt Modal ───────────────────────────────────────────────────────────────
-const DEBT_FIELD_GROUPS = {
-    student_loans:  'studentLoanFields',
-    credit_cards:   'creditCardFields',
-    personal_loans: 'personalLoanFields',
-    mortgages:      'mortgageFields'
-};
-
-function openDebtModal(category, debt = null) {
-    const modal = document.getElementById('debtModal');
-    modal.style.display = 'flex';
-    document.getElementById('debtCategory').value = category;
-    document.getElementById('debtErrors').style.display = 'none';
-
-    // Hide all category-specific groups
-    Object.values(DEBT_FIELD_GROUPS).forEach(gId => {
-        document.getElementById(gId).style.display = 'none';
+    // Assets List
+    const assetsContainer = document.getElementById('assetsList');
+    assetsContainer.innerHTML = '';
+    Object.entries(assets).forEach(([category, items]) => {
+        items.forEach(asset => {
+            const val = (asset.balance ?? 0) + (asset.base_balance ?? 0) + (asset.pending_bonus ?? 0);
+            const card = createItemCard(asset, category, val, true);
+            assetsContainer.appendChild(card);
+        });
     });
-    // Show the relevant one
-    if (DEBT_FIELD_GROUPS[category]) {
-        document.getElementById(DEBT_FIELD_GROUPS[category]).style.display = 'block';
-    }
 
-    const titles = { student_loans: 'Student Loan', credit_cards: 'Credit Card', personal_loans: 'Personal Loan', mortgages: 'Mortgage' };
+    // Liabilities List
+    const libsContainer = document.getElementById('liabilitiesList');
+    libsContainer.innerHTML = '';
+    Object.entries(liabilities).forEach(([category, items]) => {
+        items.forEach(liability => {
+            const card = createItemCard(liability, category, liability.balance, false);
+            libsContainer.appendChild(card);
+        });
+    });
 
-    if (debt) {
-        document.getElementById('debtModalTitle').textContent = `Edit ${titles[category]}`;
-        document.getElementById('debtId').value = debt.id;
-        document.getElementById('debtName').value = debt.name || '';
-        document.getElementById('debtBalance').value = debt.balance || 0;
-        document.getElementById('debtRate').value = debt.annual_interest_rate || 0;
-        document.getElementById('debtNotes').value = debt.notes || '';
+    // Charts
+    renderCharts(summary);
 
-        if (category === 'student_loans') {
-            document.getElementById('studentPlanType').value = debt.plan_type || 'plan2';
-            updatePlanInfoBox();
-        }
-        if (category === 'credit_cards') {
-            document.getElementById('creditLimit').value = debt.credit_limit || '';
-            document.getElementById('ccMinPayment').value = debt.minimum_monthly_payment || '';
-            updateUtilisation();
-        }
-        if (category === 'personal_loans') {
-            document.getElementById('loanMinPayment').value = debt.minimum_monthly_payment || '';
-            document.getElementById('loanOriginalAmount').value = debt.original_amount || '';
-            document.getElementById('loanTermMonths').value = debt.term_months || '';
-            document.getElementById('loanStartDate').value = debt.start_date ? debt.start_date.substring(0,10) : '';
-        }
-        if (category === 'mortgages') {
-            document.getElementById('mortgageMinPayment').value = debt.minimum_monthly_payment || '';
-            document.getElementById('mortgagePropertyValue').value = debt.property_value || '';
-            document.getElementById('mortgageTermMonths').value = debt.term_months || '';
-            document.getElementById('mortgageMortgageType').value = debt.mortgage_type || 'repayment';
-            updateLTV();
-        }
-    } else {
-        document.getElementById('debtModalTitle').textContent = `Add ${titles[category]}`;
-        document.getElementById('debtId').value = '';
-        document.getElementById('debtForm').reset();
-        document.getElementById('debtCategory').value = category;
+    // Insights
+    document.getElementById('intelligenceText').innerHTML = `Your current loan-to-value ratio is <span class="text-[#2D2D2A] font-bold">${(summary.ltv * 100).toFixed(0)}%</span>. Algorithmic projections identify a potential appreciation cycle across your active assets.`;
+    document.getElementById('objectiveText').innerHTML = `On current trajectory, you will reach your next significant wealth milestone of <span class="text-[#2D2D2A] font-bold">${fmt(summary.netWorth + 50000)}</span> by the next 24 months.`;
 
-        if (category === 'student_loans') {
-            document.getElementById('debtRate').value = PLAN_INFO.plan2.defaultRate;
-            updatePlanInfoBox();
-        }
-    }
-
-    updatePayoffPreview();
+    lucide.createIcons();
 }
 
-function closeDebtModal() { document.getElementById('debtModal').style.display = 'none'; }
+function createItemCard(item, category, value, isAsset) {
+    const div = document.createElement('div');
+    div.className = `rounded-3xl p-5 flex items-center justify-between cursor-pointer transition-colors ${isAsset ? 'bg-[#E9E9DF] hover:bg-[#E2E2D5]' : 'bg-white border border-[#E0E0D0] hover:bg-[#F5F5F0]'}`;
+    
+    div.onclick = () => showModal(item, category, value, isAsset);
 
-document.getElementById('debtForm').addEventListener('submit', async e => {
-    e.preventDefault();
-    const id = document.getElementById('debtId').value;
-    const category = document.getElementById('debtCategory').value;
-    const errEl = document.getElementById('debtErrors');
+    div.innerHTML = `
+        <div>
+            <p class="text-[10px] uppercase tracking-widest text-[#7A7A6A] font-bold">${category.replace('_', ' ')}</p>
+            <h4 class="text-lg font-serif text-[#4A4A3A]">${item.name}</h4>
+        </div>
+        <div class="text-right">
+            <p class="text-sm font-bold ${isAsset ? 'text-[#5A5A40]' : 'text-[#A67C52]'}">${isAsset ? '' : '-'}${fmt(value, item.currency)}</p>
+            <p class="text-[9px] text-[#9A9A8A] font-semibold">${isAsset ? 'EST. 5% YIELD' : `${item.annual_interest_rate}% APR`}</p>
+        </div>
+    `;
+    return div;
+}
 
-    const payload = {
-        name: document.getElementById('debtName').value.trim(),
-        balance: document.getElementById('debtBalance').value,
-        annual_interest_rate: document.getElementById('debtRate').value,
-        notes: document.getElementById('debtNotes').value.trim(),
-        currency: 'GBP'
+function renderCharts(summary) {
+    // Wealth Trajectory
+    const ctx = document.getElementById('wealthChart').getContext('2d');
+    if (wealthChart) wealthChart.destroy();
+
+    const labels = summary.predictions.map(p => {
+        const d = new Date(p.date);
+        return d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+    });
+
+    const isAllPredicted = summary.predictions.every(p => p.isPredicted);
+    const splitIndex = summary.predictions.findIndex(p => p.isPredicted);
+
+    wealthChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Net Worth',
+                data: summary.predictions.map(p => p.netWorth),
+                borderColor: '#5A5A40',
+                backgroundColor: 'rgba(90, 90, 64, 0.1)',
+                fill: true,
+                tension: 0.4,
+                pointRadius: 0,
+                borderWidth: 3,
+                segment: {
+                    borderDash: ctx => ctx.p0DataIndex >= (splitIndex - 1) && splitIndex !== -1 ? [6, 6] : undefined,
+                    borderColor: ctx => ctx.p0DataIndex >= (splitIndex - 1) && splitIndex !== -1 ? '#A67C52' : '#5A5A40'
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: '#0f172a',
+                    padding: 12,
+                    cornerRadius: 16,
+                    titleFont: { size: 10, weight: 'bold' },
+                    bodyFont: { size: 13 },
+                    callbacks: {
+                        title: (items) => {
+                            const index = items[0].dataIndex;
+                            const isPredicted = summary.predictions[index].isPredicted;
+                            return isPredicted ? 'Projected Milestone' : 'Historical Data';
+                        },
+                        label: (ctx) => `Net Worth: ${fmt(ctx.parsed.y)}`
+                    }
+                }
+            },
+            hover: {
+                mode: 'index',
+                intersect: false
+            },
+            scales: {
+                x: { grid: { display: false }, ticks: { font: { size: 10 }, color: '#9A9A8A' } },
+                y: { grid: { color: '#F0F0E0' }, ticks: { font: { size: 10 }, color: '#9A9A8A', callback: v => abbreviate(v) } }
+            }
+        }
+    });
+
+    // Pie Chart
+    const pieCtx = document.getElementById('pieChart').getContext('2d');
+    if (pieChart) pieChart.destroy();
+    
+    pieChart = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+            labels: summary.distribution.map(d => d.name),
+            datasets: [{
+                data: summary.distribution.map(d => d.value),
+                backgroundColor: ['#5A5A40', '#A67C52', '#D1C9B8'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '70%',
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    const dominant = [...summary.distribution].sort((a,b) => b.value - a.value)[0];
+    document.getElementById('mixLabel').textContent = dominant ? `${dominant.name} Dominant` : '';
+}
+
+// Setup "Update Ledger" button
+document.querySelector('[data-lucide="plus"]')?.parentElement?.addEventListener('click', () => showAddModal('asset'));
+
+async function showAddModal(type, existingItem = null, existingCategory = null) {
+    const modal = document.getElementById('modal');
+    const container = document.getElementById('modalContainer');
+    const templateId = type === 'asset' ? 'assetFormTemplate' : 'liabilityFormTemplate';
+    const content = document.getElementById(templateId).content.cloneNode(true);
+    
+    container.innerHTML = '';
+    container.appendChild(content);
+    
+    const form = container.querySelector('form');
+    const title = container.querySelector('h2');
+    const btn = form.querySelector('button[type="submit"]');
+
+    if (existingItem) {
+        title.textContent = `Edit ${type === 'asset' ? 'Asset' : 'Liability'}`;
+        btn.textContent = 'Save Changes';
+        
+        // Pre-fill form
+        form.category.value = existingCategory;
+        form.category.disabled = true; // Don't allow changing category for existing items
+        form.name.value = existingItem.name;
+        form.balance.value = existingItem.balance;
+        if (type === 'asset') {
+            form.type.value = existingItem.type;
+            form.currency.value = existingItem.currency;
+        } else {
+            form.annual_interest_rate.value = existingItem.annual_interest_rate;
+            form.minimum_monthly_payment.value = existingItem.minimum_monthly_payment || 0;
+        }
+    }
+
+    form.onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const jsonData = Object.fromEntries(formData.entries());
+        const category = existingCategory || jsonData.category;
+        
+        if (existingItem) jsonData.id = existingItem.id;
+
+        // Convert number types
+        if (jsonData.balance) jsonData.balance = parseFloat(jsonData.balance);
+        if (jsonData.annual_interest_rate) jsonData.annual_interest_rate = parseFloat(jsonData.annual_interest_rate);
+        if (jsonData.minimum_monthly_payment) jsonData.minimum_monthly_payment = parseFloat(jsonData.minimum_monthly_payment);
+
+        const endpoint = type === 'asset' ? `/api/assets/${category}` : `/api/liabilities/${category}`;
+        await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(jsonData)
+        });
+        
+        closeModal();
+        fetchData();
     };
 
-    if (category === 'student_loans') {
-        payload.plan_type = document.getElementById('studentPlanType').value;
-    }
-    if (category === 'credit_cards') {
-        payload.credit_limit = document.getElementById('creditLimit').value;
-        payload.minimum_monthly_payment = document.getElementById('ccMinPayment').value;
-    }
-    if (category === 'personal_loans') {
-        payload.minimum_monthly_payment = document.getElementById('loanMinPayment').value;
-        payload.original_amount = document.getElementById('loanOriginalAmount').value;
-        payload.term_months = document.getElementById('loanTermMonths').value;
-        payload.start_date = document.getElementById('loanStartDate').value;
-    }
-    if (category === 'mortgages') {
-        payload.minimum_monthly_payment = document.getElementById('mortgageMinPayment').value;
-        payload.property_value = document.getElementById('mortgagePropertyValue').value;
-        payload.term_months = document.getElementById('mortgageTermMonths').value;
-        payload.mortgage_type = document.getElementById('mortgageMortgageType').value;
-    }
+    modal.classList.remove('hidden');
+}
 
-    const method = id ? 'PUT' : 'POST';
-    const url = id ? `/api/debts/${category}/${id}` : `/api/debts/${category}`;
-
-    try {
-        const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        const json = await res.json();
-        if (res.ok) {
-            closeDebtModal();
-            fetchWealthData();
+function showModal(item, category, value, isAsset) {
+    const modal = document.getElementById('modal');
+    const modalContent = document.getElementById('modalContainer');
+    
+    const rate = isAsset ? (category === 'properties' ? 4 : 7) : item.annual_interest_rate;
+    const monthlyRate = (rate / 100) / 12;
+    
+    // Generate 12 months history + 24 months projection
+    const points = [];
+    for (let i = -12; i <= 24; i++) {
+        let val;
+        if (i >= 0) {
+            let pVal = value;
+            for(let j=0; j<i; j++) {
+                if (isAsset) pVal *= (1 + monthlyRate);
+                else pVal = Math.max(0, pVal + (pVal * monthlyRate) - (item.minimum_monthly_payment || 0));
+            }
+            val = pVal;
         } else {
-            const msgs = json.errors ? json.errors.join('<br>') : (json.error || 'Unknown error');
-            errEl.innerHTML = msgs;
-            errEl.style.display = 'block';
+            let pVal = value;
+            for(let j=0; j<Math.abs(i); j++) {
+                if (isAsset) pVal /= (1 + monthlyRate);
+                else pVal = (pVal + (item.minimum_monthly_payment || 0)) / (1 + monthlyRate);
+            }
+            val = pVal;
         }
-    } catch (err) {
-        errEl.textContent = 'Network error. Please try again.';
-        errEl.style.display = 'block';
+        points.push({ value: val, isPredicted: i > 0, label: i === 0 ? 'Now' : (i < 0 ? `${Math.abs(i)}m ago` : `${i}m`) });
     }
-});
 
-async function deleteDebt(category, id) {
-    if (!confirm('Delete this debt permanently?')) return;
-    const res = await fetch(`/api/debts/${category}/${id}`, { method: 'DELETE' });
-    if (res.ok) fetchWealthData();
+    modalContent.innerHTML = `
+        <div class="flex-grow p-6 md:p-10 space-y-8 overflow-y-auto w-full">
+            <div class="flex justify-between items-start">
+              <div>
+                <div class="text-[#9A9A8A] text-[10px] font-bold uppercase tracking-widest mb-1">${category.replace('_', ' ')}</div>
+                <h2 class="text-3xl font-serif font-bold text-[#4A4A3A]">${item.name}</h2>
+              </div>
+              <div class="flex gap-2">
+                <button onclick="showAddModal('${isAsset ? 'asset' : 'liability'}', ${JSON.stringify(item).replace(/"/g, '&quot;')}, '${category}')" class="p-2 hover:bg-[#F5F5F0] rounded-full text-[#9A9A8A] hover:text-[#5A5A40]">
+                    <i data-lucide="edit-3" class="w-5 h-5"></i>
+                </button>
+                <button onclick="closeModal()" class="p-2 hover:bg-[#F5F5F0] rounded-full text-[#9A9A8A] hover:text-[#5A5A40]">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-[#F5F5F0] p-6 rounded-[32px] border border-[#E0E0D0]">
+                <div class="text-[#9A9A8A] text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 mb-1">Current Balance</div>
+                <div class="text-3xl font-serif font-bold ${isAsset ? 'text-[#5A5A40]' : 'text-rose-600'}">${fmt(value, item.currency)}</div>
+              </div>
+              <div class="bg-[#F5F5F0] p-6 rounded-[32px] border border-[#E0E0D0]">
+                <div class="text-[#9A9A8A] text-[10px] font-bold uppercase tracking-widest flex items-center gap-1 mb-1">24-Month Projected</div>
+                <div class="text-3xl font-serif font-bold text-[#A67C52]">${fmt(points[points.length-1].value, item.currency)}</div>
+              </div>
+            </div>
+
+            <div class="h-64 mt-8">
+                <canvas id="itemChart"></canvas>
+            </div>
+        </div>
+        <div class="w-full md:w-80 bg-[#E9E9DF] border-t md:border-t-0 md:border-l border-[#E0E0D0] p-10 space-y-8 flex flex-col">
+            <div>
+              <h4 class="text-[10px] font-bold text-[#7A7A6A] uppercase tracking-widest mb-6">Ledger Parameters</h4>
+              <div class="space-y-4 text-xs">
+                <div class="flex justify-between border-b border-[#E0E0D0] pb-2"><span>Growth/Interest</span><span class="font-bold">${rate}%</span></div>
+                ${!isAsset ? `<div class="flex justify-between border-b border-[#E0E0D0] pb-2"><span>Installment</span><span class="font-bold">${fmt(item.minimum_monthly_payment || 0)}</span></div>` : ''}
+              </div>
+            </div>
+            <div class="space-y-4">
+                <p class="text-[10px] text-[#7A7A6A] italic leading-relaxed">Simulation uses standard linear growth modeling and fixed monthly payments.</p>
+                <button onclick="deleteItem('${isAsset ? 'assets' : 'liabilities'}', '${category}', '${item.id}')" class="w-full border border-rose-200 text-rose-500 hover:bg-rose-50 p-3 rounded-2xl text-[10px] font-bold uppercase tracking-widest transition-colors flex items-center justify-center gap-2">
+                    <i data-lucide="trash-2" class="w-3 h-3"></i> Delete Entity
+                </button>
+            </div>
+            <button onclick="closeModal()" class="w-full bg-[#5A5A40] text-white p-4 rounded-3xl text-[10px] font-bold uppercase tracking-widest shadow-md mt-auto">Close View</button>
+        </div>
+    `;
+
+    modal.classList.remove('hidden');
+    lucide.createIcons();
+    renderItemChart(points, isAsset, item.currency);
 }
 
-// ─── Live UI Helpers ──────────────────────────────────────────────────────────
-function updatePlanInfoBox() {
-    const plan = document.getElementById('studentPlanType').value;
-    const box  = document.getElementById('planInfoBox');
-    const info = PLAN_INFO[plan];
-    if (info) {
-        box.textContent = info.note;
-        box.style.display = 'block';
-        // Auto-fill default interest rate
-        document.getElementById('debtRate').value = info.defaultRate;
-        updatePayoffPreview();
-    }
-}
+function renderItemChart(points, isAsset, currency) {
+    const ctx = document.getElementById('itemChart').getContext('2d');
+    const splitIndex = points.findIndex(p => p.isPredicted);
 
-function updateUtilisation() {
-    const balance = parseFloat(document.getElementById('debtBalance').value) || 0;
-    const limit   = parseFloat(document.getElementById('creditLimit').value) || 0;
-    const wrapper = document.getElementById('utilisationWrapper');
-    if (limit > 0) {
-        wrapper.style.display = 'block';
-        const pct = Math.min(100, (balance / limit) * 100);
-        document.getElementById('utilisationPct').textContent = `${pct.toFixed(1)}%`;
-        const fill = document.getElementById('utilisationFill');
-        fill.style.width = `${pct}%`;
-        fill.style.background = pct > 75 ? 'var(--negative)' : pct > 40 ? '#f59e0b' : 'var(--positive)';
-    } else {
-        wrapper.style.display = 'none';
-    }
-}
-
-function updateLTV() {
-    const balance  = parseFloat(document.getElementById('debtBalance').value) || 0;
-    const propVal  = parseFloat(document.getElementById('mortgagePropertyValue').value) || 0;
-    const wrapper  = document.getElementById('ltvWrapper');
-    if (propVal > 0) {
-        wrapper.style.display = 'block';
-        const pct = Math.min(100, (balance / propVal) * 100);
-        document.getElementById('ltvPct').textContent = `${pct.toFixed(1)}%`;
-        const fill = document.getElementById('ltvFill');
-        fill.style.width = `${pct}%`;
-        fill.style.background = pct > 80 ? 'var(--negative)' : pct > 60 ? '#f59e0b' : 'var(--positive)';
-    } else {
-        wrapper.style.display = 'none';
-    }
-}
-
-function updatePayoffPreview() {
-    const cat     = document.getElementById('debtCategory').value;
-    const balance = parseFloat(document.getElementById('debtBalance').value) || 0;
-    const rate    = parseFloat(document.getElementById('debtRate').value) || 0;
-    const preview = document.getElementById('payoffPreview');
-    const content = document.getElementById('payoffContent');
-
-    let monthlyPayment = 0;
-    if (cat === 'credit_cards')   monthlyPayment = parseFloat(document.getElementById('ccMinPayment').value) || 0;
-    if (cat === 'personal_loans') monthlyPayment = parseFloat(document.getElementById('loanMinPayment').value) || 0;
-    if (cat === 'mortgages')      monthlyPayment = parseFloat(document.getElementById('mortgageMinPayment').value) || 0;
-
-    if (balance <= 0 || monthlyPayment <= 0) { preview.style.display = 'none'; return; }
-
-    const monthlyRate = rate / 100 / 12;
-    let months = 0, totalInterest = 0, remaining = balance;
-
-    if (monthlyRate === 0) {
-        months = Math.ceil(balance / monthlyPayment);
-        totalInterest = 0;
-    } else {
-        // Simulate month by month (cap at 600 months = 50 years)
-        while (remaining > 0 && months < 600) {
-            const interest = remaining * monthlyRate;
-            totalInterest += interest;
-            remaining = remaining + interest - monthlyPayment;
-            months++;
-            if (remaining < 0) remaining = 0;
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: points.map(p => p.label),
+            datasets: [{
+                data: points.map(p => p.value),
+                borderColor: isAsset ? '#5A5A40' : '#A67C52',
+                backgroundColor: isAsset ? 'rgba(90, 90, 64, 0.05)' : 'rgba(166, 124, 82, 0.05)',
+                fill: true,
+                tension: 0.3,
+                pointRadius: 0,
+                segment: {
+                    borderDash: ctx => ctx.p0DataIndex >= (splitIndex - 1) && splitIndex !== -1 ? [5, 5] : undefined
+                }
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { 
+                legend: { display: false },
+                tooltip: {
+                    backgroundColor: '#0f172a',
+                    padding: 10,
+                    cornerRadius: 12,
+                    callbacks: {
+                        title: (items) => {
+                            const p = points[items[0].dataIndex];
+                            return p.isPredicted ? `Projected: ${p.label}` : `Historical: ${p.label}`;
+                        },
+                        label: (ctx) => `Value: ${fmt(ctx.parsed.y, currency)}`
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { font: { size: 9 }, color: '#9A9A8A' }, grid: { display: false } },
+                y: { ticks: { font: { size: 9 }, color: '#9A9A8A', callback: v => abbreviate(v) }, grid: { color: '#F0F0E0' } }
+            }
         }
-        if (months >= 600) { preview.style.display = 'none'; return; }
-    }
-
-    const payoffDate = new Date();
-    payoffDate.setMonth(payoffDate.getMonth() + months);
-    const years = Math.floor(months / 12);
-    const remMonths = months % 12;
-    const duration = years > 0 ? `${years}yr ${remMonths}mo` : `${remMonths}mo`;
-
-    preview.style.display = 'block';
-    content.innerHTML = `
-        <div class="payoff-grid">
-            <div><span class="payoff-label">Paid off by</span><span class="payoff-val">${payoffDate.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })}</span></div>
-            <div><span class="payoff-label">Duration</span><span class="payoff-val">${duration}</span></div>
-            <div><span class="payoff-label">Total interest</span><span class="payoff-val negative">${fmt(totalInterest)}</span></div>
-            <div><span class="payoff-label">Total repaid</span><span class="payoff-val">${fmt(balance + totalInterest)}</span></div>
-        </div>`;
+    });
 }
 
-// ─── History Modal ────────────────────────────────────────────────────────────
-function openHistoryModal(item, name) {
-    document.getElementById('historyModalTitle').textContent = `History — ${name}`;
-    const content = document.getElementById('historyContent');
-    const history = item.history;
-
-    if (!history || history.length === 0) {
-        content.innerHTML = '<p style="color:var(--text-secondary)">No history recorded yet.</p>';
-    } else {
-        const sorted = [...history].sort((a, b) => new Date(b.date) - new Date(a.date));
-        content.innerHTML = `
-            <table class="history-table">
-                <thead><tr><th>Date</th><th>Balance</th><th>Notes</th></tr></thead>
-                <tbody>
-                    ${sorted.map(h => {
-                        const bal = h.balance ?? (h.base_balance != null ? `${fmt(h.base_balance)} + ${fmt(h.pending_bonus)} bonus` : '—');
-                        const balStr = typeof bal === 'number' ? fmt(bal) : bal;
-                        const note  = h.manual_update ? 'Manual update' : h.accrued_interest > 0 ? `+${fmt(h.accrued_interest)} interest` : '';
-                        return `<tr>
-                            <td>${new Date(h.date).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })}</td>
-                            <td>${balStr}</td>
-                            <td style="color:var(--text-tertiary);font-size:0.85em">${note}</td>
-                        </tr>`;
-                    }).join('')}
-                </tbody>
-            </table>`;
-    }
-    document.getElementById('historyModal').style.display = 'flex';
+async function deleteItem(collection, category, id) {
+    if (!confirm('Are you sure you want to delete this item?')) return;
+    
+    await fetch(`/api/${collection}/${category}/${id}`, { method: 'DELETE' });
+    closeModal();
+    fetchData();
 }
 
-function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+function closeModal() {
+    document.getElementById('modal').classList.add('hidden');
+}
+
+fetchData();
