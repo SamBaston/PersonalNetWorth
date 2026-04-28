@@ -22,6 +22,25 @@
                     <div class="amount" id="net-worth-amount">£0.00</div>
                 </div>
                 
+                <!-- ── Analytics Row ── -->
+                <div class="analytics-row">
+                    <div class="card analytics-card">
+                        <h3 class="analytics-card-title">Asset Allocation</h3>
+                        <div class="pie-chart-wrapper">
+                            <svg id="allocationPieChart" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" aria-label="Asset allocation donut chart"></svg>
+                            <div class="pie-legend" id="allocationLegend"></div>
+                        </div>
+                    </div>
+                    <div class="card analytics-card">
+                        <h3 class="analytics-card-title">Debt-to-Equity</h3>
+                        <div id="debtEquityDisplay" class="ratio-display"></div>
+                    </div>
+                    <div class="card analytics-card">
+                        <h3 class="analytics-card-title">Liquidity Ratio</h3>
+                        <div id="liquidityDisplay" class="ratio-display"></div>
+                    </div>
+                </div>
+
                 <div class="details-section">
                     <!-- ── Assets ── -->
                     <div class="card assets">

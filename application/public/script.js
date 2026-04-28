@@ -58,6 +58,10 @@ function updateDashboard(data) {
 
     let totalAssets = 0;
     let totalLiabilities = 0;
+    let cashTotal = 0;
+    let investmentsTotal = 0;
+    let propertyTotal = 0;
+    let monthlyObligations = 0;
 
     // ── Assets ──
     const bankList    = document.getElementById('bank-accounts-list');
@@ -67,7 +71,9 @@ function updateDashboard(data) {
 
     if (data.assets.bank_accounts) {
         data.assets.bank_accounts.forEach((acc, i) => {
-            totalAssets += toGBP(acc.balance, acc.currency);
+            const gbpVal = toGBP(acc.balance, acc.currency);
+            totalAssets += gbpVal;
+            cashTotal   += gbpVal;
             bankList.appendChild(createAssetItem(acc.name, acc.balance, acc.currency, i, false, 'bank_accounts', acc));
         });
     }
@@ -75,15 +81,19 @@ function updateDashboard(data) {
     let isaIdx = 0;
     if (data.assets.isas) {
         data.assets.isas.forEach(isa => {
-            totalAssets += toGBP(isa.balance, isa.currency);
+            const gbpVal = toGBP(isa.balance, isa.currency);
+            totalAssets       += gbpVal;
+            investmentsTotal  += gbpVal;
             isasList.appendChild(createAssetItem(isa.name, isa.balance, isa.currency, isaIdx++, false, 'isas', isa));
         });
     }
     if (data.assets.lisas) {
         data.assets.lisas.forEach(lisa => {
-            const base = lisa.base_balance + (lisa.realized_bonus || 0);
+            const base  = lisa.base_balance + (lisa.realized_bonus || 0);
             const bonus = lisa.pending_bonus || 0;
-            totalAssets += toGBP(base + bonus, lisa.currency);
+            const gbpVal = toGBP(base + bonus, lisa.currency);
+            totalAssets       += gbpVal;
+            investmentsTotal  += gbpVal;
             isasList.appendChild(createAssetItem(lisa.name, base, lisa.currency, isaIdx++, false, 'lisas', lisa));
             isasList.appendChild(createAssetItem('↳ Govt Bonus (25%)', bonus, lisa.currency, isaIdx++, true));
         });
@@ -92,7 +102,9 @@ function updateDashboard(data) {
     let sIdx = 0;
     if (data.assets.stock_portfolios) {
         data.assets.stock_portfolios.forEach(port => {
-            totalAssets += toGBP(port.balance || 0, port.currency || 'GBP');
+            const gbpVal = toGBP(port.balance || 0, port.currency || 'GBP');
+            totalAssets       += gbpVal;
+            investmentsTotal  += gbpVal;
             stocksList.appendChild(createAssetItem(port.name, port.balance, port.currency || 'GBP', sIdx++, false, 'stock_portfolios', port));
             if (port.type === 'tickers' && port.tickers) {
                 port.tickers.forEach(t => {
@@ -114,6 +126,12 @@ function updateDashboard(data) {
         document.getElementById(sections[cat]).style.display = debts.length ? 'block' : 'none';
         debts.forEach((debt, i) => {
             totalLiabilities += toGBP(debt.balance, debt.currency || 'GBP');
+            if (debt.minimum_monthly_payment) {
+                monthlyObligations += toGBP(parseFloat(debt.minimum_monthly_payment) || 0, 'GBP');
+            }
+            if (cat === 'mortgages' && debt.property_value) {
+                propertyTotal += toGBP(parseFloat(debt.property_value) || 0, 'GBP');
+            }
             ul.appendChild(createDebtItem(debt, cat, i));
         });
     });
@@ -124,6 +142,8 @@ function updateDashboard(data) {
     const nwEl = document.getElementById('net-worth-amount');
     nwEl.textContent = fmt(nw);
     nwEl.style.color = nw >= 0 ? 'var(--positive)' : 'var(--negative)';
+
+    renderAnalytics({ totalAssets, totalLiabilities, cashTotal, investmentsTotal, propertyTotal, monthlyObligations });
 }
 
 // ─── Asset List Item ──────────────────────────────────────────────────────────
@@ -536,3 +556,158 @@ function openHistoryModal(item, name) {
 }
 
 function closeHistoryModal() { document.getElementById('historyModal').style.display = 'none'; }
+
+// ─── Analytics Renderers ──────────────────────────────────────────────────────
+
+function renderAnalytics({ totalAssets, totalLiabilities, cashTotal, investmentsTotal, propertyTotal, monthlyObligations }) {
+    renderAllocationPie(cashTotal, investmentsTotal, propertyTotal, totalAssets);
+    renderDebtEquity(totalAssets, totalLiabilities);
+    renderLiquidity(cashTotal, monthlyObligations);
+}
+
+// ── Asset Allocation Donut ────────────────────────────────────────────────────
+function renderAllocationPie(cash, investments, property, total) {
+    const svg     = document.getElementById('allocationPieChart');
+    const legend  = document.getElementById('allocationLegend');
+    svg.innerHTML = '';
+    legend.innerHTML = '';
+
+    const COLORS  = ['#3b82f6', '#10b981', '#a78bfa'];
+    const LABELS  = ['Cash', 'Investments', 'Property'];
+    const values  = [cash, investments, property];
+    const sum     = values.reduce((a, b) => a + b, 0);
+
+    if (sum === 0) {
+        svg.innerHTML = `<text x="100" y="108" text-anchor="middle" fill="var(--text-tertiary)" font-size="13" font-family="Inter,sans-serif">No data</text>`;
+        return;
+    }
+
+    const cx = 100, cy = 100, r = 80, innerR = 52;
+    let cumAngle = -Math.PI / 2;
+
+    values.forEach((val, idx) => {
+        if (val <= 0) return;
+        const frac  = val / sum;
+        const angle = frac * 2 * Math.PI;
+        const x1    = cx + r * Math.cos(cumAngle);
+        const y1    = cy + r * Math.sin(cumAngle);
+        cumAngle   += angle;
+        const x2    = cx + r * Math.cos(cumAngle);
+        const y2    = cy + r * Math.sin(cumAngle);
+        const ix1   = cx + innerR * Math.cos(cumAngle - angle);
+        const iy1   = cy + innerR * Math.sin(cumAngle - angle);
+        const ix2   = cx + innerR * Math.cos(cumAngle);
+        const iy2   = cy + innerR * Math.sin(cumAngle);
+        const large = angle > Math.PI ? 1 : 0;
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${innerR} ${innerR} 0 ${large} 0 ${ix1} ${iy1} Z`);
+        path.setAttribute('fill', COLORS[idx]);
+        path.setAttribute('opacity', '0.9');
+        path.style.transition = 'opacity 0.2s';
+        path.addEventListener('mouseenter', () => path.setAttribute('opacity', '1'));
+        path.addEventListener('mouseleave', () => path.setAttribute('opacity', '0.9'));
+        svg.appendChild(path);
+
+        // Legend row
+        const item = document.createElement('div');
+        item.className = 'legend-item';
+        item.innerHTML = `
+            <span class="legend-dot" style="background:${COLORS[idx]}"></span>
+            <span class="legend-label">${LABELS[idx]}</span>
+            <span class="legend-value">${fmt(val)}</span>
+            <span class="legend-pct">${(frac * 100).toFixed(1)}%</span>`;
+        legend.appendChild(item);
+    });
+
+    // Centre label
+    const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', cx); label.setAttribute('y', cy - 8);
+    label.setAttribute('text-anchor', 'middle');
+    label.setAttribute('fill', 'var(--text-secondary)');
+    label.setAttribute('font-size', '11');
+    label.setAttribute('font-family', 'Inter,sans-serif');
+    label.textContent = 'Total';
+    svg.appendChild(label);
+
+    const amount = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+    amount.setAttribute('x', cx); amount.setAttribute('y', cy + 10);
+    amount.setAttribute('text-anchor', 'middle');
+    amount.setAttribute('fill', 'var(--text-primary)');
+    amount.setAttribute('font-size', '13');
+    amount.setAttribute('font-weight', '700');
+    amount.setAttribute('font-family', 'Inter,sans-serif');
+    amount.textContent = fmt(total);
+    svg.appendChild(amount);
+}
+
+// ── Debt-to-Equity ────────────────────────────────────────────────────────────
+function renderDebtEquity(assets, liabilities) {
+    const el = document.getElementById('debtEquityDisplay');
+    const equity = assets - liabilities;
+    let ratio, ratioStr, color, barPct, interpretation;
+
+    if (equity <= 0) {
+        ratioStr = fmt(equity);
+        color = 'var(--negative)';
+        barPct = 100;
+        interpretation = 'Liabilities exceed assets — net negative equity.';
+    } else {
+        ratio = liabilities / equity;
+        ratioStr = ratio.toFixed(2);
+        color = ratio < 0.5 ? 'var(--positive)' : ratio < 1.5 ? 'var(--warning)' : 'var(--negative)';
+        barPct = Math.min(100, (ratio / 3) * 100);
+        interpretation = ratio < 0.5
+            ? 'Low leverage — strong equity position.'
+            : ratio < 1.5
+            ? 'Moderate leverage — monitor debt levels.'
+            : 'High leverage — consider reducing debt.';
+    }
+
+    el.innerHTML = `
+        <div class="ratio-big" style="color:${color}">${ratioStr}</div>
+        <div class="ratio-sub">${equity <= 0 ? 'Net Equity' : 'Debt ÷ Equity'}<br>${interpretation}</div>
+        <div class="ratio-bar-track">
+            <div class="ratio-bar-fill" style="width:${barPct}%;background:${color}"></div>
+        </div>
+        <div class="ratio-detail">
+            <strong>Assets:</strong> ${fmt(assets)}<br>
+            <strong>Liabilities:</strong> ${fmt(liabilities)}<br>
+            <strong>Net Equity:</strong> ${fmt(equity)}
+        </div>`;
+}
+
+// ── Liquidity Ratio ───────────────────────────────────────────────────────────
+function renderLiquidity(cash, monthlyObligations) {
+    const el = document.getElementById('liquidityDisplay');
+    let ratioStr, color, barPct, interpretation;
+
+    if (monthlyObligations <= 0) {
+        ratioStr = '—';
+        color = 'var(--text-secondary)';
+        barPct = 0;
+        interpretation = 'No monthly debt obligations recorded.';
+    } else {
+        const ratio = cash / monthlyObligations;
+        ratioStr = ratio.toFixed(1) + 'x';
+        // ≥6 months cash = healthy, 3–6 = okay, <3 = low
+        color = ratio >= 6 ? 'var(--positive)' : ratio >= 3 ? 'var(--warning)' : 'var(--negative)';
+        barPct = Math.min(100, (ratio / 12) * 100);
+        interpretation = ratio >= 6
+            ? 'Strong liquidity —' + ratio.toFixed(1) + ' months of obligations covered.'
+            : ratio >= 3
+            ? 'Adequate liquidity — consider building cash reserves.'
+            : 'Low liquidity — less than 3 months of obligations in cash.';
+    }
+
+    el.innerHTML = `
+        <div class="ratio-big" style="color:${color}">${ratioStr}</div>
+        <div class="ratio-sub">Cash ÷ Monthly Obligations<br>${interpretation}</div>
+        <div class="ratio-bar-track">
+            <div class="ratio-bar-fill" style="width:${barPct}%;background:${color}"></div>
+        </div>
+        <div class="ratio-detail">
+            <strong>Cash on hand:</strong> ${fmt(cash)}<br>
+            <strong>Monthly obligations:</strong> ${monthlyObligations > 0 ? fmt(monthlyObligations) + '/mo' : '—'}
+        </div>`;
+}
