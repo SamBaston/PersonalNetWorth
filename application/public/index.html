@@ -3,309 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Personal Wealth Tracker</title>
-    <meta name="description" content="A sleek, modern application to track your personal assets, liabilities, and overall net worth.">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <title>WealthSphere: Personal Net Worth Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:wght@400;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="container">
-        <header>
-            <h1>Net Worth Tracker</h1>
-            <p>Your financial snapshot at a glance.</p>
-        </header>
-        
-        <main>
-            <div class="dashboard">
-                <div class="card total-net-worth">
-                    <h2>Total Net Worth</h2>
-                    <div class="amount" id="net-worth-amount">£0.00</div>
-                </div>
-                
-                <div class="details-section">
-                    <!-- ── Assets ── -->
-                    <div class="card assets">
-                        <h3>Assets</h3>
-                        
-                        <div class="asset-category">
-                            <div class="category-header">
-                                <h4>Bank Accounts</h4>
-                                <button class="add-btn" id="add-bank-btn" onclick="openModal('bank_accounts')">+ Add</button>
-                            </div>
-                            <ul id="bank-accounts-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="asset-category">
-                            <div class="category-header">
-                                <h4>ISAs &amp; LISAs</h4>
-                                <div>
-                                    <button class="add-btn" id="add-isa-btn" onclick="openModal('isas')">+ ISA</button>
-                                    <button class="add-btn" id="add-lisa-btn" onclick="openModal('lisas')">+ LISA</button>
-                                </div>
-                            </div>
-                            <ul id="isas-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="asset-category">
-                            <div class="category-header">
-                                <h4>Stock Portfolios</h4>
-                                <button class="add-btn" id="add-stock-btn" onclick="openModal('stock_portfolios')">+ Add</button>
-                            </div>
-                            <ul id="stocks-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="total" style="margin-top:2rem">
-                            <span>Total Assets:</span>
-                            <span id="total-assets" class="positive">£0.00</span>
-                        </div>
-                    </div>
-
-                    <!-- ── Liabilities ── -->
-                    <div class="card liabilities">
-                        <div class="liabilities-header">
-                            <h3>Liabilities</h3>
-                            <div class="debt-add-buttons">
-                                <button class="add-btn add-btn-debt" id="add-student-loan-btn" onclick="openDebtModal('student_loans')">+ Student Loan</button>
-                                <button class="add-btn add-btn-debt" id="add-credit-card-btn" onclick="openDebtModal('credit_cards')">+ Credit Card</button>
-                                <button class="add-btn add-btn-debt" id="add-loan-btn" onclick="openDebtModal('personal_loans')">+ Personal Loan</button>
-                                <button class="add-btn add-btn-debt" id="add-mortgage-btn" onclick="openDebtModal('mortgages')">+ Mortgage</button>
-                            </div>
-                        </div>
-                        
-                        <div class="asset-category" id="student-loans-section">
-                            <div class="category-header">
-                                <h4>🎓 Student Loans</h4>
-                            </div>
-                            <ul id="student-loans-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="asset-category" id="credit-cards-section">
-                            <div class="category-header">
-                                <h4>💳 Credit Cards</h4>
-                            </div>
-                            <ul id="credit-cards-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="asset-category" id="personal-loans-section">
-                            <div class="category-header">
-                                <h4>🏦 Personal Loans</h4>
-                            </div>
-                            <ul id="personal-loans-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="asset-category" id="mortgages-section">
-                            <div class="category-header">
-                                <h4>🏠 Mortgages</h4>
-                            </div>
-                            <ul id="mortgages-list" class="item-list"></ul>
-                        </div>
-
-                        <div class="total">
-                            <span>Total Liabilities:</span>
-                            <span id="total-liabilities" class="negative">£0.00</span>
-                        </div>
-                    </div>
+<body class="bg-[#F5F5F0] text-[#2D2D2A] font-sans">
+    <div class="max-w-6xl mx-auto p-4 md:p-8 space-y-8">
+        <!-- Header Section -->
+        <header class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div>
+                <h1 class="text-4xl md:text-5xl font-serif font-bold text-[#4A4A3A] tracking-tight">WealthSphere</h1>
+                <p class="text-[#7A7A6A] mt-2 text-lg font-medium">Consolidated Financial Intelligence</p>
+            </div>
+            <div class="text-right">
+                <div class="text-[#9A9A8A] uppercase tracking-widest text-[10px] font-bold mb-1">Total Net Worth</div>
+                <div id="totalWorth" class="text-4xl md:text-6xl font-serif font-bold text-[#2D2D2A]">
+                    £0
                 </div>
             </div>
-        </main>
+        </header>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+            <!-- Trajectory Graph -->
+            <section class="lg:col-span-2 bg-white rounded-[32px] border border-[#E0E0D0] p-8 shadow-sm flex flex-col">
+                <div class="flex items-center justify-between mb-8">
+                    <h2 class="text-lg font-serif text-[#4A4A3A] flex items-center gap-2">
+                        <i data-lucide="trending-up" class="w-5 h-5 text-[#5A5A40]"></i>
+                        Wealth Trajectory
+                    </h2>
+                    <div class="flex items-center gap-4 text-[10px] font-bold uppercase tracking-wider text-[#9A9A8A]">
+                        <span class="flex items-center gap-1.5"><div class="w-3 h-0.5 bg-[#5A5A40]"></div> Historical</span>
+                        <span class="flex items-center gap-1.5"><div class="w-3 h-0.5 border-t-2 border-dashed border-[#A67C52]"></div> Projected</span>
+                    </div>
+                </div>
+                <div class="flex-grow">
+                    <canvas id="wealthChart"></canvas>
+                </div>
+            </section>
+
+            <!-- Asset Mix -->
+            <section class="bg-white rounded-[32px] border border-[#E0E0D0] p-8 shadow-sm flex flex-col items-center">
+                <h2 class="text-lg font-serif text-[#4A4A3A] self-start mb-6 w-full">Asset Mix</h2>
+                <div class="w-40 h-40">
+                    <canvas id="pieChart"></canvas>
+                </div>
+                <div class="mt-6 text-[10px] text-[#7A7A6A] font-bold uppercase tracking-widest" id="mixLabel">Property Dominant</div>
+            </section>
+
+            <!-- Score -->
+            <section class="bg-white rounded-[32px] border border-[#E0E0D0] p-8 shadow-sm flex flex-col justify-center items-center text-center">
+                <span class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold mb-6">Responsibility Score</span>
+                <div class="relative flex items-center justify-center w-24 h-24">
+                   <svg class="w-full h-full transform -rotate-90">
+                     <circle cx="48" cy="48" r="42" stroke="#E9E9DF" stroke-width="8" fill="none" />
+                     <circle id="scoreCircle" cx="48" cy="48" r="42" stroke="#5A5A40" stroke-width="8" fill="none" stroke-dasharray="264" stroke-dashoffset="264" style="transition: stroke-dashoffset 1s ease-out;" />
+                   </svg>
+                   <span id="scoreText" class="absolute text-2xl font-serif font-bold text-[#5A5A40]">0</span>
+                </div>
+                <span id="ltvLabel" class="text-[10px] text-[#7A7A6A] mt-4 font-medium uppercase tracking-wider">LTV: 0%</span>
+            </section>
+        </div>
+
+        <!-- Details Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
+            <!-- Assets Section -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between border-b border-[#E0E0D0] pb-2">
+                    <h3 class="text-xl font-serif text-[#4A4A3A]">Active Assets</h3>
+                    <button onclick="showAddModal('asset')" class="p-1 hover:bg-[#E9E9DF] rounded-full text-[#5A5A40] transition-colors">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div id="assetsList" class="space-y-4">
+                    <!-- Dynamic Assets -->
+                </div>
+            </div>
+
+            <!-- Liabilities Section -->
+            <div class="space-y-6">
+                <div class="flex items-center justify-between border-b border-[#E0E0D0] pb-2">
+                    <h3 class="text-xl font-serif text-[#4A4A3A]">Liabilities</h3>
+                    <button onclick="showAddModal('liability')" class="p-1 hover:bg-[#E9E9DF] rounded-full text-[#A67C52] transition-colors">
+                        <i data-lucide="plus" class="w-5 h-5"></i>
+                    </button>
+                </div>
+                <div id="liabilitiesList" class="space-y-4">
+                    <!-- Dynamic Liabilities -->
+                </div>
+                <!-- Action Card -->
+                <div onclick="showAddModal('asset')" class="bg-[#5A5A40] rounded-3xl p-5 flex items-center justify-between text-white shadow-lg cursor-pointer hover:bg-[#4A4A30] transition-all">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-widest opacity-60 font-bold">Quick Action</p>
+                        <h4 class="text-lg font-serif">Update Ledger</h4>
+                    </div>
+                    <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center text-[#5A5A40] text-xl font-bold">+</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="mt-20 pt-12 border-t border-[#E0E0D0] grid grid-cols-1 md:grid-cols-2 gap-8 mb-20 text-[#7A7A6A] text-sm">
+            <div class="bg-[#E9E9DF] p-8 rounded-[32px] border border-[#E0E0D0]/50 relative overflow-hidden flex flex-col">
+                <div class="absolute top-0 left-0 w-1 h-full bg-[#5A5A40]"></div>
+                <h4 class="text-[#4A4A3A] font-serif font-bold flex items-center gap-2 mb-3">
+                    <i data-lucide="info" class="w-4 h-4"></i>
+                    Financial Intelligence
+                </h4>
+                <p id="intelligenceText" class="italic leading-relaxed mb-6">Calculating insights...</p>
+                <button onclick="simulateScenario()" class="mt-auto self-start text-[10px] font-bold uppercase tracking-widest text-[#5A5A40] flex items-center gap-2 hover:opacity-70 transition-opacity">
+                    Simulate Scenario <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                </button>
+            </div>
+            <div class="bg-[#F5F5F0] p-8 rounded-[32px] border border-[#E0E0D0] flex flex-col justify-center">
+                <div class="flex justify-between items-start mb-3">
+                    <h4 class="text-[#4A4A3A] font-serif font-bold flex items-center gap-2">
+                        <i data-lucide="target" class="w-4 h-4 text-[#A67C52]"></i>
+                        Growth Objective
+                    </h4>
+                    <button onclick="exportData()" class="text-[9px] font-bold uppercase tracking-widest text-[#9A9A8A] hover:text-[#4A4A3A] transition-colors border border-dotted border-[#9A9A8A] px-2 py-1 rounded-md">
+                        Export Ledger
+                    </button>
+                </div>
+                <p id="objectiveText" class="italic leading-relaxed">Analyzing trajectory...</p>
+            </div>
+        </footer>
     </div>
 
-    <!-- ── Asset Modal ── -->
-    <div id="assetModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle">Add Asset</h2>
-            <form id="assetForm">
-                <input type="hidden" id="assetId">
-                <input type="hidden" id="assetCategory">
-                
-                <div class="form-group">
-                    <label>Name</label>
-                    <input type="text" id="assetName" required>
-                </div>
-                
-                <!-- standard balance -->
-                <div class="form-group" id="balanceGroup">
-                    <label>Total Balance</label>
-                    <input type="number" step="0.01" min="0" id="assetBalance">
-                </div>
-                
-                <!-- LISA split balances -->
-                <div class="form-group" id="lisaGroup" style="display:none;">
-                    <label>Base Balance</label>
-                    <input type="number" step="0.01" min="0" id="lisaBaseBalance">
-                    <label style="margin-top: 1rem;">Pending Govt Bonus (25%)</label>
-                    <input type="number" step="0.01" min="0" id="lisaPendingBonus">
-                </div>
-                
-                <div class="form-group">
-                    <label>Currency</label>
-                    <select id="assetCurrency">
-                        <option value="GBP">GBP (£)</option>
-                        <option value="USD">USD ($)</option>
-                    </select>
-                </div>
-                
-                <button type="submit" class="save-btn">Save Asset</button>
-            </form>
+    <!-- Modal Overlay -->
+    <div id="modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 hidden">
+        <div class="absolute inset-0 bg-[#0f172a]/40 backdrop-blur-md" onclick="closeModal()"></div>
+        <div id="modalContainer" class="relative w-full max-w-4xl bg-white border border-[#E0E0D0] rounded-[40px] shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+            <!-- Content Injected Here -->
         </div>
     </div>
 
-    <!-- ── Debt Modal ── -->
-    <div id="debtModal" class="modal">
-        <div class="modal-content modal-content--wide">
-            <span class="close-btn" onclick="closeDebtModal()">&times;</span>
-            <h2 id="debtModalTitle">Add Debt</h2>
-
-            <!-- Validation error banner -->
-            <div id="debtErrors" class="error-banner" style="display:none;"></div>
-
-            <form id="debtForm">
-                <input type="hidden" id="debtId">
-                <input type="hidden" id="debtCategory">
-
-                <!-- ─ Common fields ─ -->
-                <div class="form-group">
-                    <label for="debtName">Name / Label</label>
-                    <input type="text" id="debtName" placeholder="e.g. Barclaycard, Student Loan…" required>
-                </div>
-
-                <div class="form-row">
-                    <div class="form-group">
-                        <label for="debtBalance">Current Balance (£)</label>
-                        <input type="number" step="0.01" min="0" id="debtBalance" placeholder="0.00" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="debtRate">Annual Interest Rate (%)</label>
-                        <input type="number" step="0.01" min="0" max="100" id="debtRate" placeholder="e.g. 7.3">
-                    </div>
-                </div>
-
-                <!-- ─ Student loan fields ─ -->
-                <div id="studentLoanFields" style="display:none;">
-                    <div class="form-group">
-                        <label for="studentPlanType">Loan Plan</label>
-                        <select id="studentPlanType">
-                            <option value="plan1">Plan 1 — pre-2012 (England/Wales)</option>
-                            <option value="plan2" selected>Plan 2 — post-2012 (England/Wales)</option>
-                            <option value="plan4">Plan 4 — Scotland</option>
-                            <option value="plan5">Plan 5 — from 2023/24</option>
-                            <option value="postgrad">Postgraduate Loan</option>
+    <!-- Hidden Form Templates -->
+    <template id="assetFormTemplate">
+        <div class="p-8 md:p-10 w-full overflow-y-auto">
+            <h2 class="text-3xl font-serif font-bold text-[#4A4A3A] mb-8">Add New Asset</h2>
+            <form id="assetForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold">Category</label>
+                        <select name="category" class="w-full bg-[#F5F5F0] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#5A5A40]">
+                            <option value="bank_accounts">Bank Account</option>
+                            <option value="isas">ISA</option>
+                            <option value="lisas">LISA</option>
+                            <option value="stock_portfolios">Stock Portfolio</option>
+                            <option value="properties">Property</option>
                         </select>
                     </div>
-                    <div class="info-box" id="planInfoBox"></div>
-                </div>
-
-                <!-- ─ Credit card fields ─ -->
-                <div id="creditCardFields" style="display:none;">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="creditLimit">Credit Limit (£)</label>
-                            <input type="number" step="0.01" min="0" id="creditLimit" placeholder="0.00">
-                        </div>
-                        <div class="form-group">
-                            <label for="ccMinPayment">Minimum Monthly Payment (£)</label>
-                            <input type="number" step="0.01" min="0" id="ccMinPayment" placeholder="0.00">
-                        </div>
+                    <div>
+                        <label class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold">Asset Name</label>
+                        <input type="text" name="name" required class="w-full bg-[#F5F5F0] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#5A5A40]" placeholder="e.g. Monzo Savings">
                     </div>
-                    <!-- Utilisation bar -->
-                    <div class="utilisation-wrapper" id="utilisationWrapper" style="display:none;">
-                        <div class="utilisation-label">
-                            <span>Credit Utilisation</span>
-                            <span id="utilisationPct">0%</span>
-                        </div>
-                        <div class="utilisation-bar-track">
-                            <div class="utilisation-bar-fill" id="utilisationFill"></div>
-                        </div>
+                    <div>
+                        <label class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold">Type</label>
+                        <input type="text" name="type" required class="w-full bg-[#F5F5F0] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#5A5A40]" placeholder="e.g. Cash, Stocks">
                     </div>
                 </div>
-
-                <!-- ─ Personal loan fields ─ -->
-                <div id="personalLoanFields" style="display:none;">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="loanMinPayment">Minimum Monthly Payment (£)</label>
-                            <input type="number" step="0.01" min="0" id="loanMinPayment" placeholder="0.00">
-                        </div>
-                        <div class="form-group">
-                            <label for="loanOriginalAmount">Original Loan Amount (£)</label>
-                            <input type="number" step="0.01" min="0" id="loanOriginalAmount" placeholder="0.00">
-                        </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold">Current Balance</label>
+                        <input type="number" step="0.01" name="balance" required class="w-full bg-[#F5F5F0] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#5A5A40]" placeholder="0.00">
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="loanTermMonths">Loan Term (months)</label>
-                            <input type="number" step="1" min="1" id="loanTermMonths" placeholder="e.g. 48">
-                        </div>
-                        <div class="form-group">
-                            <label for="loanStartDate">Start Date</label>
-                            <input type="date" id="loanStartDate">
-                        </div>
+                    <div>
+                        <label class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold">Currency</label>
+                        <select name="currency" class="w-full bg-[#F5F5F0] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#5A5A40]">
+                            <option value="GBP">GBP (£)</option>
+                            <option value="USD">USD ($)</option>
+                        </select>
+                    </div>
+                    <div class="pt-6">
+                        <button type="submit" class="w-full bg-[#5A5A40] text-white p-4 rounded-3xl text-sm font-bold uppercase tracking-widest shadow-md">Add Asset</button>
                     </div>
                 </div>
-
-                <!-- ─ Mortgage fields ─ -->
-                <div id="mortgageFields" style="display:none;">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="mortgageMinPayment">Monthly Payment (£)</label>
-                            <input type="number" step="0.01" min="0" id="mortgageMinPayment" placeholder="0.00">
-                        </div>
-                        <div class="form-group">
-                            <label for="mortgagePropertyValue">Property Value (£)</label>
-                            <input type="number" step="0.01" min="0" id="mortgagePropertyValue" placeholder="0.00">
-                        </div>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="mortgageTermMonths">Remaining Term (months)</label>
-                            <input type="number" step="1" min="1" id="mortgageTermMonths" placeholder="e.g. 240">
-                        </div>
-                        <div class="form-group">
-                            <label for="mortgageMortgageType">Mortgage Type</label>
-                            <select id="mortgageMortgageType">
-                                <option value="repayment">Repayment</option>
-                                <option value="interest_only">Interest Only</option>
-                            </select>
-                        </div>
-                    </div>
-                    <!-- LTV indicator -->
-                    <div class="utilisation-wrapper" id="ltvWrapper" style="display:none;">
-                        <div class="utilisation-label">
-                            <span>Loan-to-Value (LTV)</span>
-                            <span id="ltvPct">0%</span>
-                        </div>
-                        <div class="utilisation-bar-track">
-                            <div class="utilisation-bar-fill" id="ltvFill"></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ─ Notes ─ -->
-                <div class="form-group">
-                    <label for="debtNotes">Notes (optional)</label>
-                    <input type="text" id="debtNotes" placeholder="Any additional context…">
-                </div>
-
-                <!-- ─ Projected payoff ─ -->
-                <div class="payoff-preview" id="payoffPreview" style="display:none;">
-                    <div class="payoff-title">📅 Projected Payoff</div>
-                    <div id="payoffContent"></div>
-                </div>
-
-                <button type="submit" class="save-btn save-btn--debt" id="debtSaveBtn">Save Debt</button>
             </form>
         </div>
-    </div>
+    </template>
 
-    <!-- ── History Modal ── -->
-    <div id="historyModal" class="modal">
-        <div class="modal-content modal-content--wide">
-            <span class="close-btn" onclick="closeHistoryModal()">&times;</span>
-            <h2 id="historyModalTitle">Balance History</h2>
-            <div id="historyContent" class="history-content"></div>
+    <template id="liabilityFormTemplate">
+        <div class="p-8 md:p-10 w-full overflow-y-auto">
+            <h2 class="text-3xl font-serif font-bold text-[#4A4A3A] mb-8">Add Liability</h2>
+            <form id="liabilityForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold">Category</label>
+                        <select name="category" class="w-full bg-[#F5F5F0] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#5A5A40]">
+                            <option value="student_loans">Student Loan</option>
+                            <option value="credit_cards">Credit Card</option>
+                            <option value="personal_loans">Personal Loan</option>
+                            <option value="mortgages">Mortgage</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold">Liability Name</label>
+                        <input type="text" name="name" required class="w-full bg-[#F5F5F0] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#5A5A40]" placeholder="e.g. Plan 2 Loan">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold">Annual Rate (%)</label>
+                        <input type="number" step="0.1" name="annual_interest_rate" required class="w-full bg-[#F5F5F0] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#5A5A40]" placeholder="0.0">
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <label class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold">Current Balance</label>
+                        <input type="number" step="0.01" name="balance" required class="w-full bg-[#F5F5F0] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#5A5A40]" placeholder="0.00">
+                    </div>
+                    <div>
+                        <label class="text-[10px] uppercase tracking-widest text-[#9A9A8A] font-bold">Monthly Payment</label>
+                        <input type="number" step="0.01" name="minimum_monthly_payment" class="w-full bg-[#F5F5F0] border-none rounded-xl p-3 text-sm focus:ring-2 focus:ring-[#5A5A40]" placeholder="0.00">
+                    </div>
+                    <div class="pt-6">
+                        <button type="submit" class="w-full bg-[#A67C52] text-white p-4 rounded-3xl text-sm font-bold uppercase tracking-widest shadow-md">Add Liability</button>
+                    </div>
+                </div>
+            </form>
         </div>
-    </div>
+    </template>
 
     <script src="script.js"></script>
 </body>
